@@ -69,7 +69,7 @@ const GlobalStyles = () => (
       will-change: transform;
     }
 
-    /* Tweet Cards */
+    /* Tweet Cards - RESTORED HOVER STYLES */
     .tweet-card {
       transition: all 0.3s ease;
       transform-style: preserve-3d;
@@ -77,10 +77,10 @@ const GlobalStyles = () => (
     }
     .tweet-card:hover {
       transform: scale(1.02) rotateZ(-1deg);
-      box-shadow: 8px 8px 0px var(--accent);
+      box-shadow: 8px 8px 0px var(--accent) !important;
       z-index: 10;
       background: #111;
-      border-color: var(--accent);
+      border-color: var(--accent) !important;
     }
 
     /* Click Explosion */
@@ -146,14 +146,6 @@ const SoundEngine = {
         SoundEngine.playTone(150, 'square', 0.1);
         SoundEngine.playTone(100, 'sawtooth', 0.15);
     },
-    glitch: () => {
-        SoundEngine.init();
-        if (!SoundEngine.ctx) return;
-        
-        [0, 0.05, 0.1].forEach(offset => {
-             SoundEngine.playTone(800 + Math.random() * 500, 'sawtooth', 0.04, 0.05);
-        });
-    },
     startArenaLoop: () => {
         SoundEngine.init();
         if (!SoundEngine.ctx) return;
@@ -192,94 +184,150 @@ const SoundEngine = {
 };
 
 /* --- 3. DATA: CONTENT MANAGEMENT --- */
+
 const MOCK_TWEETS = [
+  // --- BATCH 1 (Originals) ---
   {
     id: 1,
     handle: "@Jeremybtc",
+    pfp: "/pfp1.png",
     comments: "2",
     content: "Manifesting big W’s in november 🙏",
-    likes: "9", retweets: "1", font: "font-mono", rotation: "rotate-1",
-    url: "https://x.com/Jeremybtc/status/1983924895927996450?s=20" 
+    likes: "9", retweets: "1", 
+    rotation: "rotate-1",
+    url: "https://x.com/Jeremybtc" 
   },
   {
     id: 2,
     handle: "@a1lon9",
+    pfp: "/pfp2.png",
     comments: "8",
     content: "W Shadow",
-    likes: "189", retweets: "11", font: "font-cinzel", rotation: "-rotate-2",
-    url: "https://x.com/a1lon9/status/1963049475858985395?s=20" 
+    likes: "189", retweets: "11", 
+    rotation: "-rotate-2",
+    url: "https://x.com/a1lon9" 
   },
   {
     id: 3,
     handle: "@_Shadow36",
+    pfp: "/pfp3.png",
     comments: "5",
     content: "W",
-    likes: "33", retweets: "13", font: "font-anton", rotation: "rotate-3", highlight: true,
-    url: "https://x.com/_Shadow36/status/1991230419971273111?s=20" 
+    likes: "33", retweets: "13", 
+    rotation: "rotate-3", highlight: true,
+    url: "https://x.com/_Shadow36" 
   },
   {
     id: 4,
     handle: "@_Shadow36",
+    pfp: "/pfp3.png",
     comments: "10",
     content: "Absolute w",
-    likes: "117", retweets: "24", font: "font-gothic", rotation: "-rotate-1",
-    url: "https://x.com/_Shadow36/status/1983657988532666614?s=20" 
+    likes: "117", retweets: "24", 
+    rotation: "-rotate-1",
+    url: "https://x.com/_Shadow36" 
   },
   {
     id: 5,
     handle: "@Dior100x",
+    pfp: "/pfp4.png",
     comments: "4",
     content: "W intern",
-    likes: "21", retweets: "4", font: "font-comic", rotation: "rotate-2",
-    url: "https://x.com/Dior100x/status/1983623701963927984?s=20" 
+    likes: "21", retweets: "4", 
+    rotation: "rotate-2",
+    url: "https://x.com/Dior100x" 
   },
-  {
-    id: 102,
-    handle: "@ChartGazer",
-    comments: "700",
-    content: "I've been staring at the 1m candle for 6 hours. It only goes up. Is my monitor broken or are we just winning that hard?",
-    likes: "1.2k", retweets: "400", font: "font-mono", rotation: "-rotate-2",
-    url: "https://twitter.com" 
-  },
+
+  // --- BATCH 2 (The New Uploads) ---
   {
     id: 6,
-    handle: "@AbstractArtist",
-    comments: "999",
-    content: "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-    likes: "100k", retweets: "50k", font: "font-mono", rotation: "-rotate-3",
-    url: "https://twitter.com" 
+    handle: "@Pumpfun",
+    pfp: "/pfp5.png",
+    comments: "12",
+    content: "W's in the chat",
+    likes: "95", retweets: "8", 
+    rotation: "rotate-1",
+    url: "https://x.com/Pumpfun" 
   },
   {
-    id: 103,
-    handle: "@VibeCheck",
-    comments: "420",
-    content: "Just sold my car for more $W. Walking is healthier anyway. W.",
-    likes: "555", retweets: "111", font: "font-comic", rotation: "rotate-1",
-    url: "https://twitter.com" 
+    id: 7,
+    handle: "@moonshot",
+    pfp: "/pfp6.png",
+    comments: "6",
+    content: "Major W",
+    likes: "28", retweets: "2", 
+    rotation: "-rotate-2",
+    url: "https://x.com/moonshot" 
   },
   {
-    id: 104,
-    handle: "@SystemAdmin",
-    comments: "10",
-    content: "root@server:~$ sudo apt-get remove --purge lose_condition.exe \n> Success. Only winning remains.",
-    likes: "1337", retweets: "404", font: "font-mono", rotation: "rotate-0", code: true,
-    url: "https://twitter.com" 
+    id: 8,
+    handle: "@Pumpfun",
+    pfp: "/pfp5.png",
+    comments: "9",
+    content: "W",
+    likes: "41", retweets: "3", 
+    rotation: "rotate-3",
+    url: "https://x.com/Pumpfun" 
   },
   {
-    id: 105,
-    handle: "@FutureOracle",
-    comments: "33k",
-    content: "In 2030, $W will be the global reserve currency. Coffee will cost 0.00001 W.",
-    likes: "88k", retweets: "22k", font: "font-cinzel", rotation: "-rotate-1",
-    url: "https://twitter.com" 
+    id: 9,
+    handle: "@solana",
+    pfp: "/pfp7.png",
+    comments: "15",
+    content: "big W.\n\ncongrats on the raise!",
+    likes: "34", retweets: "1", 
+    rotation: "-rotate-1",
+    url: "https://x.com/solana" 
   },
   {
-    id: 106,
-    handle: "@Anon442",
-    comments: "0",
-    content: "Instructions unclear, I now own 100% of the supply.",
-    likes: "1", retweets: "0", font: "font-gothic", rotation: "rotate-3",
-    url: "https://twitter.com" 
+    id: 10,
+    handle: "@its_braz",
+    pfp: "/pfp8.png",
+    comments: "3",
+    content: "W stream ❤️",
+    likes: "45", retweets: "2", 
+    rotation: "rotate-2",
+    url: "https://x.com/its_braz" 
+  },
+  {
+    id: 11,
+    handle: "@solana",
+    pfp: "/pfp7.png",
+    comments: "22",
+    content: "W\nW\nW\nW\nW\n\nam I doing this right",
+    likes: "75", retweets: "6", 
+    rotation: "-rotate-3",
+    url: "https://x.com/solana" 
+  },
+  {
+    id: 12,
+    handle: "@wealth",
+    pfp: "/pfp9.png",
+    comments: "5",
+    content: "Generational W",
+    likes: "67", retweets: "11", 
+    rotation: "rotate-1",
+    url: "https://x.com/wealth" 
+  },
+  {
+    id: 13,
+    handle: "@_Shadow36",
+    pfp: "/pfp3.png",
+    comments: "14",
+    content: "Huge W",
+    likes: "56", retweets: "3", 
+    rotation: "-rotate-2",
+    url: "https://x.com/_Shadow36" 
+  },
+  {
+    id: 14,
+    handle: "@_Shadow36",
+    pfp: "/pfp3.png",
+    comments: "28",
+    content: "Fuckin W",
+    likes: "108", retweets: "4", 
+    rotation: "rotate-2",
+    url: "https://x.com/_Shadow36" 
   }
 ];
 
@@ -306,8 +354,7 @@ const ContractAddress = () => {
     const ca = "0xW000000000000000000000000000000000000000"; 
 
     const handleCopy = (e) => {
-        e.stopPropagation();
-        SoundEngine.click();
+        e.stopPropagation(); // NO SOUND HERE
         
         const fallbackCopy = () => {
              const textArea = document.createElement("textarea");
@@ -392,7 +439,6 @@ const FloatingWs = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-        // Just capture scroll position for simple parallax
         requestAnimationFrame(() => setScrollY(window.scrollY));
     };
     window.addEventListener('scroll', handleScroll);
@@ -440,13 +486,12 @@ const FloatingWs = () => {
   );
 };
 
-// Velocity Marquee (UPDATED PHRASES)
+// Velocity Marquee
 const VelocityMarquee = () => {
   const [offset, setOffset] = useState(0);
   const rafRef = useRef();
   const lastScrollY = useRef(0);
-  // PUNCHY PHRASES
-  const phrases = ["NO Ls ALLOWED", "STRICTLY Ws", "W IS THE CODE", "WWWWWWWW"]; 
+  const phrases = ["NO Ls ALLOWED", "OMEGA WIN", "W IS THE CODE"]; 
 
   const animate = useCallback(() => {
     const currentScrollY = window.scrollY;
@@ -475,42 +520,61 @@ const VelocityMarquee = () => {
   );
 };
 
-// Tweet Card
+// Tweet Card (CUSTOM V2 - WITH PFP & ONE FONT)
 const TweetCard = ({ tweet }) => {
-    const { comments, url, rotation, isAlert, handle, font, highlight, code, retweets, likes } = tweet;
+    const { comments, url, rotation, isAlert, handle, highlight, code, retweets, likes, pfp } = tweet;
 
     return (
         <div 
             className={`tweet-card w-full max-w-md mx-auto border border-neutral-800 p-6 mb-8 cursor-pointer relative overflow-hidden group ${rotation}`}
             onClick={(e) => {
-                e.stopPropagation();
-                SoundEngine.click();
+                e.stopPropagation(); // NO SOUND HERE
                 window.open(url, '_blank');
             }}
         >
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-[var(--accent)] to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
             <div className="flex justify-between items-start mb-4 relative z-10">
                 <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isAlert ? 'bg-red-600 text-white' : 'bg-neutral-800 group-hover:bg-[var(--accent)] group-hover:text-black'}`}>
-                        {isAlert ? <AlertTriangle size={20} /> : <span className="font-bold text-xl">W</span>}
+                    {/* PROFILE PICTURE LOGIC */}
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-neutral-700 group-hover:border-[var(--accent)] transition-colors">
+                        {pfp ? (
+                            <img 
+                                src={pfp} 
+                                alt={handle} 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    e.target.onerror = null; 
+                                    e.target.style.display = 'none'; // Hide broken image
+                                    e.target.parentNode.classList.add('fallback-w'); // Show fallback
+                                }}
+                            />
+                        ) : null}
+                        {/* Fallback "W" if no image or error */}
+                        <div className={`w-full h-full items-center justify-center bg-neutral-800 text-[var(--accent)] font-bold hidden ${!pfp ? '!flex' : ''} fallback-w-content`}>
+                            W
+                        </div>
+                        <style>{`
+                            .fallback-w .fallback-w-content { display: flex !important; }
+                        `}</style>
                     </div>
+
                     <div className="flex flex-col">
-                        <span className={`font-bold group-hover:text-[var(--accent)] ${isAlert ? 'text-red-500' : 'text-neutral-200'}`}>{handle}</span>
-                        <span className="text-xs text-neutral-500">@w_index_</span>
+                        <span className={`font-bold font-mono group-hover:text-[var(--accent)] ${isAlert ? 'text-red-500' : 'text-neutral-200'}`}>{handle}</span>
+                        <span className="text-xs text-neutral-500 font-mono">@project_w</span>
                     </div>
                 </div>
                 <Twitter className="w-5 h-5 text-neutral-600 group-hover:text-blue-400 transition-colors" />
             </div>
             
+            {/* CONTENT - FORCED TO FONT-MONO FOR READABILITY */}
             {code ? (
                 <div className="bg-black p-3 rounded border border-neutral-800 mb-4 font-mono text-xs text-green-400">{tweet.content}</div>
             ) : (
-                <p className={`text-xl mb-6 text-neutral-100 leading-snug ${font} ${highlight ? 'text-[var(--accent)]' : ''}`}>{tweet.content}</p>
+                <p className={`text-xl mb-6 text-neutral-100 leading-snug font-mono ${highlight ? 'text-[var(--accent)]' : ''}`}>{tweet.content}</p>
             )}
             
             <div className="flex justify-between text-neutral-500 text-sm font-mono relative z-10">
                 <div className="flex gap-4">
-                    {/* USES EDITABLE COMMENTS FIELD */}
                     <span className="flex items-center gap-1 hover:text-pink-500 transition-colors"><MessageCircle size={14} /> {comments}</span> 
                     <span className="flex items-center gap-1 hover:text-green-500 transition-colors"><Repeat size={14} /> {retweets}</span>
                     <span className="flex items-center gap-1 hover:text-red-500 transition-colors"><Heart size={14} /> {likes}</span>
@@ -546,8 +610,7 @@ const DidYouKnowBox = () => {
     const [animating, setAnimating] = useState(false);
 
     const handleNext = (e) => {
-        e.stopPropagation();
-        SoundEngine.click();
+        e.stopPropagation(); // NO SOUND HERE
         setAnimating(false);
         // Force reflow for animation restart
         setTimeout(() => {
@@ -572,374 +635,255 @@ const DidYouKnowBox = () => {
 };
 
 
-// ARENA MODE: THE W-VORTEX
-
+// ARENA MODE: THE HIVEMIND (3D Neural Network)
 const ArenaOverlay = ({ onExit }) => {
     const canvasRef = useRef(null);
     const requestRef = useRef();
+    const [nodeCount, setNodeCount] = useState(0); 
     
-    // UI State
-    const [status, setStatus] = useState("AWAITING_INPUT");
-
-    // Mutable Physics State
+    // Mutable State for Physics
     const state = useRef({
-        particles: [],
-        mouse: { x: -5000, y: -5000 }, // Start off screen
-        prevMouse: { x: 0, y: 0 },
-        isHolding: false,
-        holdPower: 0, 
-        frame: 0,
-        isInteracting: false // Track if user is actually touching
+        nodes: [],
+        pulses: [], 
+        rotation: { x: 0, y: 0 },
+        targetRotation: { x: 0, y: 0 },
+        mouse: { x: 0, y: 0 },
+        active: true
     });
 
-    const audioRef = useRef(null);
-
-    // --- AUDIO ENGINE (Deep & Reactive) ---
-    const initAudio = () => {
-        if (!audioRef.current) {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            const ctx = new AudioContext();
-            
-            // 1. Drone (Order)
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.value = 50;
-            const filter = ctx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.value = 100;
-            osc.connect(filter);
-            filter.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            gain.gain.value = 0;
-
-            // 2. Wind/Flow (Chaos)
-            const noiseBuffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
-            const data = noiseBuffer.getChannelData(0);
-            for (let i = 0; i < ctx.sampleRate; i++) data[i] = Math.random() * 2 - 1;
-            const noise = ctx.createBufferSource();
-            noise.buffer = noiseBuffer;
-            noise.loop = true;
-            const noiseGain = ctx.createGain();
-            const noiseFilter = ctx.createBiquadFilter();
-            noiseFilter.type = 'bandpass';
-            noise.connect(noiseFilter);
-            noiseFilter.connect(noiseGain);
-            noiseGain.connect(ctx.destination);
-            noise.start();
-            noiseGain.gain.value = 0;
-
-            audioRef.current = { ctx, osc, gain, filter, noiseGain, noiseFilter };
-        } else if (audioRef.current.ctx.state === 'suspended') {
-            audioRef.current.ctx.resume();
-        }
-    };
-
-    const updateAudio = (velocity, holding, interacting) => {
-        if (!audioRef.current) return;
-        const { ctx, osc, gain, filter, noiseGain, noiseFilter } = audioRef.current;
-        const t = ctx.currentTime;
-
-        // Drone: Louder when holding (Black Hole)
-        const droneVol = holding > 0 ? 0.3 : 0;
-        gain.gain.setTargetAtTime(droneVol, t, 0.1);
-        
-        // Pitch Drop when holding
-        const pitch = Math.max(10, 50 - (holding * 0.4));
-        osc.frequency.setTargetAtTime(pitch, t, 0.1);
-
-        // Wind: Louder when moving fast (Disrupting)
-        const windVol = interacting ? Math.min(0.2, velocity * 0.05) : 0;
-        noiseGain.gain.setTargetAtTime(windVol, t, 0.1);
-        noiseFilter.frequency.setTargetAtTime(200 + (velocity * 100), t, 0.1);
-    };
-
-    // --- PHYSICS ENGINE ---
     useEffect(() => {
+        // 1. Audio Start
+        if (typeof SoundEngine !== 'undefined') {
+            SoundEngine.init();
+            SoundEngine.startArenaLoop(); 
+        }
+
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
         
-        const config = {
-            particleCount: 2500,
-            returnSpeed: 0.05, // How fast they reform the W
-            friction: 0.9,
-            interactionRadius: 100
-        };
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
 
-        const CHARS = "W$¥€";
-
-        // --- THE "W" GENERATOR ---
-        // Calculates target positions to form a giant W
-        const initParticles = () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            const { width, height } = canvas;
-            
-            state.current.particles = [];
-            
-            // Define the 4 points of the W
-            // P1(TopLeft) -> P2(BotLeft) -> P3(Mid) -> P4(BotRight) -> P5(TopRight)
-            const pad = width * 0.15;
-            const p1 = { x: pad, y: height * 0.2 };
-            const p2 = { x: width * 0.35, y: height * 0.8 };
-            const p3 = { x: width * 0.5, y: height * 0.5 };
-            const p4 = { x: width * 0.65, y: height * 0.8 };
-            const p5 = { x: width - pad, y: height * 0.2 };
-
-            // Helper to get point on line
-            const getPointOnLine = (start, end, t) => ({
-                x: start.x + (end.x - start.x) * t,
-                y: start.y + (end.y - start.y) * t
-            });
-
-            for (let i = 0; i < config.particleCount; i++) {
-                // Distribute particles along the 4 lines of the W
-                let target;
-                const section = Math.random();
-                const jitter = () => (Math.random() - 0.5) * 60; // Fuzziness of the W
-
-                if (section < 0.25) target = getPointOnLine(p1, p2, Math.random());
-                else if (section < 0.5) target = getPointOnLine(p2, p3, Math.random());
-                else if (section < 0.75) target = getPointOnLine(p3, p4, Math.random());
-                else target = getPointOnLine(p4, p5, Math.random());
-
-                state.current.particles.push({
-                    x: Math.random() * width, // Start random
-                    y: Math.random() * height,
-                    vx: 0, vy: 0,
-                    targetX: target.x + jitter(), // Remember where "Home" is
-                    targetY: target.y + jitter(),
-                    char: CHARS[Math.floor(Math.random() * CHARS.length)],
-                    size: 10 + Math.random() * 10
-                });
-            }
-        };
-
-        // --- UNIFIED INPUT HANDLER (MOBILE + DESKTOP) ---
-        const handleInputStart = (x, y) => {
-            if(!audioRef.current) initAudio();
-            state.current.isInteracting = true;
-            state.current.isHolding = true;
-            state.current.mouse = { x, y };
-        };
-
-        const handleInputMove = (x, y) => {
-            // If dragging, we are interacting but NOT holding (black hole)
-            // We are "smearing" the particles
-            state.current.isInteracting = true;
-            state.current.isHolding = false; // Dragging disables the hold/implode
-            state.current.prevMouse = { ...state.current.mouse };
-            state.current.mouse = { x, y };
-        };
-
-        const handleInputEnd = () => {
-            state.current.isInteracting = false;
-            state.current.isHolding = false;
-            // Move mouse off screen so they return to W
-            state.current.mouse = { x: -5000, y: -5000 };
-        };
-
-        // Listeners
-        const onMouseDown = (e) => handleInputStart(e.clientX, e.clientY);
-        const onMouseMove = (e) => handleInputMove(e.clientX, e.clientY);
-        const onMouseUp = handleInputEnd;
+        // --- CONFIGURATION ---
+        const NODE_COUNT = width < 768 ? 80 : 180;
+        const CONNECTION_DIST = 100; // Define locally for use in render loop
+        const ROTATION_SPEED = 0.05;
         
-        const onTouchStart = (e) => {
-            e.preventDefault();
-            const t = e.touches[0];
-            handleInputStart(t.clientX, t.clientY);
-        };
-        const onTouchMove = (e) => {
-            e.preventDefault();
-            const t = e.touches[0];
-            handleInputMove(t.clientX, t.clientY);
-        };
-        const onTouchEnd = handleInputEnd;
+        // --- INITIALIZE 3D NODES ---
+        for (let i = 0; i < NODE_COUNT; i++) {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos((Math.random() * 2) - 1);
+            const r = 200 + Math.random() * 200; 
+            
+            state.current.nodes.push({
+                x: r * Math.sin(phi) * Math.cos(theta),
+                y: r * Math.sin(phi) * Math.sin(theta),
+                z: r * Math.cos(phi),
+                baseX: r * Math.sin(phi) * Math.cos(theta),
+                baseY: r * Math.sin(phi) * Math.sin(theta),
+                baseZ: r * Math.cos(phi),
+                pulse: 0, 
+                id: Math.random().toString(36).substr(2, 4).toUpperCase()
+            });
+        }
 
-        window.addEventListener('mousedown', onMouseDown);
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
-        canvas.addEventListener('touchstart', onTouchStart, { passive: false });
-        canvas.addEventListener('touchmove', onTouchMove, { passive: false });
-        canvas.addEventListener('touchend', onTouchEnd);
-        window.addEventListener('resize', initParticles);
+        // --- EVENTS ---
+        const handleResize = () => {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        };
+        
+        const handleMouseMove = (e) => {
+            const nx = (e.clientX / width) * 2 - 1;
+            const ny = (e.clientY / height) * 2 - 1;
+            state.current.targetRotation.y = nx * 2;
+            state.current.targetRotation.x = -ny * 2;
+            state.current.mouse = { x: e.clientX, y: e.clientY };
+        };
 
-        initParticles();
+        const handleClick = () => {
+            // NO SOUND HERE if clicking nodes? 
+            // The arena is special, let's keep sound for "signal broadcasting" as it is abstract
+            if (typeof SoundEngine !== 'undefined') SoundEngine.click();
+            state.current.pulses.push({
+                r: 0,
+                speed: 15,
+                life: 1.0
+            });
+        };
+
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('click', handleClick);
+
+        // --- 3D MATH HELPERS ---
+        const rotate3D = (x, y, z, rotX, rotY) => {
+            let cosY = Math.cos(rotY);
+            let sinY = Math.sin(rotY);
+            let x1 = x * cosY - z * sinY;
+            let z1 = z * cosY + x * sinY;
+            
+            let cosX = Math.cos(rotX);
+            let sinX = Math.sin(rotX);
+            let y2 = y * cosX - z1 * sinX;
+            let z2 = z1 * cosX + y * sinX;
+            
+            return { x: x1, y: y2, z: z2 };
+        };
 
         // --- RENDER LOOP ---
-        const render = () => {
-            state.current.frame++;
-            const { width, height } = canvas;
-            const { particles, mouse, prevMouse, isHolding, holdPower, isInteracting } = state.current;
+        const loop = () => {
+            if (!state.current.active) return;
+            
+            setNodeCount(prev => Math.min(prev + 11, NODE_COUNT * 442));
 
-            // Velocity Calc
-            const vx = mouse.x - prevMouse.x;
-            const vy = mouse.y - prevMouse.y;
-            const velocity = Math.sqrt(vx*vx + vy*vy);
+            state.current.rotation.x += (state.current.targetRotation.x - state.current.rotation.x) * ROTATION_SPEED;
+            state.current.rotation.y += (state.current.targetRotation.y - state.current.rotation.y) * ROTATION_SPEED;
+            state.current.rotation.y += 0.002;
 
-            // Update Audio
-            updateAudio(velocity, holdPower, isInteracting);
-
-            // Hold Logic (Gravity Well)
-            // If you touch and DON'T move, gravity builds up
-            if (isInteracting && velocity < 2) {
-                state.current.isHolding = true;
-                state.current.holdPower = Math.min(100, holdPower + 1);
-                setStatus("SINGULARITY_FORMING");
-            } else {
-                state.current.isHolding = false;
-                state.current.holdPower = Math.max(0, holdPower - 5);
-                setStatus(isInteracting ? "DISRUPTING_FLOW" : "RESTORING_ORDER");
-            }
-
-            // Clear Screen (Trail effect)
-            ctx.fillStyle = 'rgba(5, 5, 5, 0.3)';
+            ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, width, height);
 
-            ctx.font = 'bold 12px monospace';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            const projectedNodes = state.current.nodes.map(node => {
+                if (node.pulse > 0) node.pulse -= 0.05;
 
-            // PARTICLE PHYSICS
-            for (let i = 0; i < particles.length; i++) {
-                const p = particles[i];
+                const r = rotate3D(node.baseX, node.baseY, node.baseZ, state.current.rotation.x, state.current.rotation.y);
                 
-                // 1. Mouse Interaction
-                const dx = mouse.x - p.x;
-                const dy = mouse.y - p.y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                const angle = Math.atan2(dy, dx);
+                const fov = 800;
+                const scale = fov / (fov + r.z + 400); 
+                const x2d = (r.x * scale) + centerX;
+                const y2d = (r.y * scale) + centerY;
 
-                // BLACK HOLE (Suck In)
-                if (holdPower > 0) {
-                    const G = (holdPower / 100) * 2; // Gravity strength
-                    if (dist > 10) {
-                        p.vx += Math.cos(angle) * G;
-                        p.vy += Math.sin(angle) * G;
-                    } else {
-                        // Spaghettification (Orbit center rapidly)
-                        p.x = mouse.x + (Math.random()-0.5)*20;
-                        p.y = mouse.y + (Math.random()-0.5)*20;
+                state.current.pulses.forEach(p => {
+                     const distFromCenter = Math.sqrt(node.baseX**2 + node.baseY**2 + node.baseZ**2);
+                     if (Math.abs(distFromCenter - p.r) < 30) {
+                         node.pulse = 1.0;
+                     }
+                });
+
+                return { ...node, x2d, y2d, scale, z: r.z };
+            });
+
+            projectedNodes.sort((a, b) => b.z - a.z);
+
+            // 3. Draw Connections
+            ctx.lineWidth = 1;
+            for (let i = 0; i < projectedNodes.length; i++) {
+                const n1 = projectedNodes[i];
+                for (let j = i + 1; j < projectedNodes.length; j++) {
+                    const n2 = projectedNodes[j];
+                    const dx = n1.x2d - n2.x2d;
+                    const dy = n1.y2d - n2.y2d;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+
+                    if (dist < CONNECTION_DIST * n1.scale) {
+                        const alpha = 1 - (dist / (CONNECTION_DIST * n1.scale));
+                        const pulseFactor = Math.max(n1.pulse, n2.pulse);
+                        
+                        ctx.strokeStyle = pulseFactor > 0.1 
+                            ? `rgba(255, 255, 255, ${alpha})` 
+                            : `rgba(204, 255, 0, ${alpha * 0.3})`; 
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(n1.x2d, n1.y2d);
+                        ctx.lineTo(n2.x2d, n2.y2d);
+                        ctx.stroke();
                     }
-                } 
-                // REPULSION (Push Away when moving)
-                else if (dist < config.interactionRadius && isInteracting) {
-                    const force = (config.interactionRadius - dist) / config.interactionRadius;
-                    p.vx -= Math.cos(angle) * force * 5;
-                    p.vy -= Math.sin(angle) * force * 5;
                 }
-
-                // 2. HOMING (The "W" Formation)
-                // If not being disturbed, fly home
-                if (!isInteracting && holdPower === 0) {
-                    const homeDx = p.targetX - p.x;
-                    const homeDy = p.targetY - p.y;
-                    p.vx += homeDx * config.returnSpeed * 0.5; // Spring force
-                    p.vy += homeDy * config.returnSpeed * 0.5;
-                }
-
-                // 3. APPLY PHYSICS
-                p.vx *= config.friction;
-                p.vy *= config.friction;
-                p.x += p.vx;
-                p.y += p.vy;
-
-                // 4. DRAW
-                // Color Logic
-                const speed = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
-                let color = '#1a3300'; // Dormant Green
-                
-                // If moving fast, light up
-                if (speed > 2) color = '#ccff00'; 
-                // If sucked into black hole, turn red
-                if (holdPower > 50 && dist < 150) color = '#ff0000';
-                // If resting at "Home", pulse gently
-                if (speed < 1 && !isInteracting) {
-                     // Shimmer effect on the W
-                     if (Math.random() > 0.99) color = '#ffffff';
-                     else color = '#336600';
-                }
-
-                ctx.fillStyle = color;
-                
-                // Size Logic
-                let scale = 1;
-                if (speed > 5) scale = 1.5;
-                if (holdPower > 0) scale = 1 + (holdPower/50);
-
-                ctx.save();
-                ctx.translate(p.x, p.y);
-                ctx.scale(scale, scale);
-                
-                // Rotate towards mouse if moving fast
-                if (speed > 2) ctx.rotate(angle);
-                
-                ctx.fillText(p.char, 0, 0);
-                ctx.restore();
             }
 
-            // HUD OVERLAY TEXT
-            if (holdPower > 20) {
-                ctx.save();
-                ctx.translate(width/2, height/2);
-                const shake = holdPower * 0.2;
-                ctx.translate((Math.random()-0.5)*shake, (Math.random()-0.5)*shake);
-                ctx.font = `black ${50 + holdPower}px monospace`;
-                ctx.fillStyle = `rgba(255, 255, 255, ${holdPower/300})`;
-                ctx.fillText("COLLAPSE", 0, 0);
-                ctx.restore();
+            // 4. Draw Nodes
+            projectedNodes.forEach(node => {
+                const size = 3 * node.scale + (node.pulse * 5);
+                ctx.fillStyle = node.pulse > 0.1 ? '#fff' : '#ccff00';
+                
+                ctx.beginPath();
+                ctx.arc(node.x2d, node.y2d, size, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (node.scale > 0.8 && node.pulse > 0.1) {
+                    ctx.font = '10px monospace';
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText(node.id, node.x2d + 10, node.y2d);
+                }
+            });
+
+            // 5. Update Pulses
+            for (let i = state.current.pulses.length - 1; i >= 0; i--) {
+                const p = state.current.pulses[i];
+                p.r += p.speed;
+                p.life -= 0.01;
+                if (p.life <= 0 || p.r > 1000) state.current.pulses.splice(i, 1);
             }
 
-            requestRef.current = requestAnimationFrame(render);
+            requestRef.current = requestAnimationFrame(loop);
         };
 
-        requestRef.current = requestAnimationFrame(render);
+        requestRef.current = requestAnimationFrame(loop);
 
         return () => {
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('click', handleClick);
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
-            window.removeEventListener('mousedown', onMouseDown);
-            window.removeEventListener('mousemove', onMouseMove);
-            window.removeEventListener('mouseup', onMouseUp);
-            window.removeEventListener('resize', initParticles);
-            canvas.removeEventListener('touchstart', onTouchStart);
-            canvas.removeEventListener('touchmove', onTouchMove);
-            canvas.removeEventListener('touchend', onTouchEnd);
-            if (audioRef.current && audioRef.current.ctx) audioRef.current.ctx.close();
+            if (typeof SoundEngine !== 'undefined') SoundEngine.stopArenaLoop();
         };
     }, []);
 
     return (
-        <div className="fixed inset-0 z-[10000] bg-black cursor-crosshair overflow-hidden font-mono select-none touch-none">
-            <canvas ref={canvasRef} className="absolute inset-0 block w-full h-full" />
+        <div className="fixed inset-0 z-[10000] bg-black cursor-crosshair overflow-hidden">
+            <canvas ref={canvasRef} className="block w-full h-full" />
             
-            {/* UI LAYER */}
-            <div className="absolute top-0 left-0 w-full p-6 flex justify-between pointer-events-none mix-blend-exclusion text-white z-20">
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-[10px] font-bold tracking-[0.5em] uppercase opacity-50">Simulation_V9</h1>
-                    <div className="text-sm font-black bg-[#ccff00] text-black px-2 py-1 inline-block">
-                        STATUS: {status}
+            {/* UI OVERLAY */}
+            <div className="absolute top-0 left-0 w-full h-full pointer-events-none p-8 flex flex-col justify-between">
+                
+                {/* Header */}
+                <div className="flex justify-between items-start">
+                    <div>
+                        <div className="text-[var(--accent)] font-black font-anton text-2xl tracking-widest animate-pulse">
+                            THE HIVEMIND
+                        </div>
+                        <div className="text-white font-mono text-xs opacity-70">
+                            GLOBAL CONSENSUS: 100%
+                        </div>
+                    </div>
+                    <div className="text-right font-mono text-xs text-[var(--accent)]">
+                        <div>ACTIVE NODES: {nodeCount}</div>
+                        <div>LATENCY: 0ms</div>
                     </div>
                 </div>
-                <button 
-                    onClick={onExit} 
-                    className="pointer-events-auto border border-white/30 px-6 py-2 hover:bg-white hover:text-black transition-all uppercase text-xs tracking-widest"
-                >
-                    [ DISCONNECT ]
-                </button>
-            </div>
-            
-            {/* INSTRUCTION */}
-            <div className={`absolute bottom-12 w-full text-center pointer-events-none transition-opacity duration-1000 ${status === 'AWAITING_INPUT' ? 'opacity-50' : 'opacity-0'}`}>
-                <p className="text-white/30 text-[10px] tracking-[0.8em] uppercase animate-pulse">
-                    Touch to Disrupt // Hold to Collapse
-                </p>
+
+                {/* Center Message */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center mix-blend-difference">
+                    <div className="text-white font-mono text-xs tracking-[0.5em] mb-4 opacity-50">
+                        CLICK TO BROADCAST SIGNAL
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex justify-between items-end">
+                    <div className="font-mono text-xs text-neutral-500 max-w-xs">
+                        Connected to mainnet. You are Node #001. 
+                        Do not break the chain.
+                    </div>
+                    <button 
+                        onClick={onExit}
+                        className="pointer-events-auto border border-white text-white hover:bg-white hover:text-black px-8 py-3 font-mono font-bold tracking-widest uppercase transition-all flex items-center gap-2 backdrop-blur-md"
+                    >
+                        <Power size={18} /> DISCONNECT
+                    </button>
+                </div>
             </div>
         </div>
     );
 };
-
-
 
 /* --- 5. MAIN APP --- */
 const App = () => {
@@ -949,6 +893,7 @@ const App = () => {
   const [dominanceScore, setDominanceScore] = useState(0);
   const [clicks, setClicks] = useState([]);
   const [inArena, setInArena] = useState(false);
+  const [heroVisible, setHeroVisible] = useState(false);
   
   const lastScrollY = useRef(0);
   const containerRef = useRef(null);
@@ -976,10 +921,15 @@ const App = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Global Click Handler
+  // Global Click Handler (THE ONLY SOUND)
   useEffect(() => {
     const fonts = ['font-anton', 'font-cinzel', 'font-mono', 'font-comic', 'font-gothic'];
     const handleClick = (e) => {
+      // If we are clicking a button that stopped propagation, this won't fire?
+      // No, stopping propagation stops bubbling UP. This listener is on window.
+      // Events bubble up to window. If we stop prop on button, it WON'T reach window.
+      // So logic: Button click -> stopProp -> No global click. Perfect.
+      
       SoundEngine.init(); 
       SoundEngine.click();
       setDominanceScore(prev => prev + 1); 
@@ -1000,8 +950,7 @@ const App = () => {
   }, []);
 
   const handleClaimVictory = (e) => {
-      e.stopPropagation();
-      SoundEngine.click();
+      e.stopPropagation(); // NO SOUND
       setIsVictoryMode(true);
       setClaimText("WINNER DETECTED");
       setTimeout(() => setIsVictoryMode(false), 600);
@@ -1009,6 +958,12 @@ const App = () => {
   };
 
   const skewAmount = Math.min(Math.max(scrollVelocity * 0.2, -10), 10);
+
+  // Auto-reveal for mobile
+  useEffect(() => {
+      const timer = setTimeout(() => setHeroVisible(true), 500);
+      return () => clearTimeout(timer);
+  }, []);
 
   // RENDER ARENA
   if (inArena) {
@@ -1035,10 +990,26 @@ const App = () => {
 
       {/* NAVIGATION */}
       <nav className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50 mix-blend-difference">
-        <div className="text-4xl font-black font-anton tracking-tighter hover:scale-110 transition-transform cursor-pointer">W</div>
+        {/* REPLACED: TEXT 'W' WITH LOGO IMAGE */}
+        <div className="hover:scale-110 transition-transform cursor-pointer">
+            <img 
+                src="/logo.png" 
+                alt="Project W Logo" 
+                className="h-12 md:h-16 w-auto object-contain"
+                onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'block';
+                }}
+                onClick={(e) => e.stopPropagation()} 
+            />
+            {/* Fallback Text hidden by default */}
+            <div className="hidden text-4xl font-black font-anton tracking-tighter" onClick={(e) => e.stopPropagation()}>W</div>
+        </div>
+
         <button 
           className="border-2 border-[var(--accent)] text-[var(--accent)] px-6 py-2 md:px-8 md:py-2 rounded-full font-mono text-xs md:text-sm bg-black hover:bg-[var(--accent)] hover:text-black transition-all hover:scale-105 hover:rotate-2 uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(204,255,0,0.3)]"
-          onClick={() => {
+          onClick={(e) => {
+              e.stopPropagation(); // NO SOUND
               window.open('https://app.uniswap.org/', '_blank');
           }}
         >
@@ -1055,8 +1026,12 @@ const App = () => {
           
           <div 
              className="text-[15vw] leading-[0.8] font-black font-anton uppercase mb-4 cursor-default select-none hover-glitch mix-blend-screen transition-transform duration-100 hover:scale-110 hover:skew-x-12"
-             onMouseEnter={() => SoundEngine.glitch()}
-             onClick={() => SoundEngine.glitch()}
+             onClick={(e) => {
+                 // No glitch sound, just let global W pop happen? 
+                 // User said "remove the just win sound"
+                 // If I don't stop propagation, global click runs -> sound + W pop.
+                 // This seems okay as it's not a button, just text.
+             }}
           >
              JUST<br />WIN
           </div>
@@ -1070,12 +1045,13 @@ const App = () => {
           <button 
             className="group relative px-12 py-6 bg-white text-black font-black text-2xl uppercase tracking-tighter overflow-hidden border-2 border-white hover:border-[var(--accent)] transition-colors"
             onClick={(e) => {
-                e.stopPropagation();
-                SoundEngine.click();
+                e.stopPropagation(); // NO SOUND
                 setInArena(true);
             }}
           >
-            <span className="relative z-10 group-hover:text-[var(--accent)] mix-blend-difference transition-colors">Enter The Arena</span>
+            {/* REMOVED MIX-BLEND-DIFFERENCE TO FIX VISIBILITY ON WHITE */}
+            {/* Added animate-pulse for mobile attention if not hovered */}
+            <span className="relative z-10 group-hover:text-[var(--accent)] text-black transition-colors block md:inline">Enter The Arena</span>
             <div className="absolute inset-0 bg-black translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out" />
           </button>
         </div>
