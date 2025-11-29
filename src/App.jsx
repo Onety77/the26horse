@@ -186,11 +186,11 @@ const SoundEngine = {
 /* --- 3. DATA: CONTENT MANAGEMENT --- */
 
 const MOCK_TWEETS = [
-  // --- BATCH 1 (Originals) ---
+  // --- BATCH 1 ---
   {
     id: 1,
     handle: "@Jeremybtc",
-    pfp: "/pfp1.png",
+    pfp: "/pfp1.jpg", // Changed to .jpg
     comments: "2",
     content: "Manifesting big W’s in november 🙏",
     likes: "9", retweets: "1", 
@@ -200,7 +200,7 @@ const MOCK_TWEETS = [
   {
     id: 2,
     handle: "@a1lon9",
-    pfp: "/pfp2.png",
+    pfp: "/pfp2.jpg",
     comments: "8",
     content: "W Shadow",
     likes: "189", retweets: "11", 
@@ -210,7 +210,7 @@ const MOCK_TWEETS = [
   {
     id: 3,
     handle: "@_Shadow36",
-    pfp: "/pfp3.png",
+    pfp: "/pfp3.jpg",
     comments: "5",
     content: "W",
     likes: "33", retweets: "13", 
@@ -220,7 +220,7 @@ const MOCK_TWEETS = [
   {
     id: 4,
     handle: "@_Shadow36",
-    pfp: "/pfp3.png",
+    pfp: "/pfp3.jpg",
     comments: "10",
     content: "Absolute w",
     likes: "117", retweets: "24", 
@@ -230,7 +230,7 @@ const MOCK_TWEETS = [
   {
     id: 5,
     handle: "@Dior100x",
-    pfp: "/pfp4.png",
+    pfp: "/pfp4.jpg",
     comments: "4",
     content: "W intern",
     likes: "21", retweets: "4", 
@@ -238,11 +238,11 @@ const MOCK_TWEETS = [
     url: "https://x.com/Dior100x" 
   },
 
-  // --- BATCH 2 (The New Uploads) ---
+  // --- BATCH 2 ---
   {
     id: 6,
     handle: "@Pumpfun",
-    pfp: "/pfp5.png",
+    pfp: "/pfp5.jpg",
     comments: "12",
     content: "W's in the chat",
     likes: "95", retweets: "8", 
@@ -252,7 +252,7 @@ const MOCK_TWEETS = [
   {
     id: 7,
     handle: "@moonshot",
-    pfp: "/pfp6.png",
+    pfp: "/pfp6.jpg",
     comments: "6",
     content: "Major W",
     likes: "28", retweets: "2", 
@@ -262,7 +262,7 @@ const MOCK_TWEETS = [
   {
     id: 8,
     handle: "@Pumpfun",
-    pfp: "/pfp5.png",
+    pfp: "/pfp5.jpg",
     comments: "9",
     content: "W",
     likes: "41", retweets: "3", 
@@ -272,7 +272,7 @@ const MOCK_TWEETS = [
   {
     id: 9,
     handle: "@solana",
-    pfp: "/pfp7.png",
+    pfp: "/pfp7.jpg",
     comments: "15",
     content: "big W.\n\ncongrats on the raise!",
     likes: "34", retweets: "1", 
@@ -282,7 +282,7 @@ const MOCK_TWEETS = [
   {
     id: 10,
     handle: "@its_braz",
-    pfp: "/pfp8.png",
+    pfp: "/pfp8.jpg",
     comments: "3",
     content: "W stream ❤️",
     likes: "45", retweets: "2", 
@@ -292,7 +292,7 @@ const MOCK_TWEETS = [
   {
     id: 11,
     handle: "@solana",
-    pfp: "/pfp7.png",
+    pfp: "/pfp7.jpg",
     comments: "22",
     content: "W\nW\nW\nW\nW\n\nam I doing this right",
     likes: "75", retweets: "6", 
@@ -302,7 +302,7 @@ const MOCK_TWEETS = [
   {
     id: 12,
     handle: "@wealth",
-    pfp: "/pfp9.png",
+    pfp: "/pfp9.jpg",
     comments: "5",
     content: "Generational W",
     likes: "67", retweets: "11", 
@@ -312,7 +312,7 @@ const MOCK_TWEETS = [
   {
     id: 13,
     handle: "@_Shadow36",
-    pfp: "/pfp3.png",
+    pfp: "/pfp3.jpg",
     comments: "14",
     content: "Huge W",
     likes: "56", retweets: "3", 
@@ -322,7 +322,7 @@ const MOCK_TWEETS = [
   {
     id: 14,
     handle: "@_Shadow36",
-    pfp: "/pfp3.png",
+    pfp: "/pfp3.jpg",
     comments: "28",
     content: "Fuckin W",
     likes: "108", retweets: "4", 
