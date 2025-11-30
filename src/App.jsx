@@ -492,7 +492,7 @@ const VelocityMarquee = () => {
   const [offset, setOffset] = useState(0);
   const rafRef = useRef();
   const lastScrollY = useRef(0);
-  const phrases = ["NO Ls ALLOWED", "OMEGA WIN", "W IS THE CODE"]; 
+  const phrases = ["NO Ls ALLOWED", "STRICTLY Ws"]; 
 
   const animate = useCallback(() => {
     const currentScrollY = window.scrollY;
@@ -510,7 +510,7 @@ const VelocityMarquee = () => {
 
   return (
     <div className="relative w-full overflow-hidden bg-[var(--accent)] py-2 md:py-4 -rotate-2 scale-110 z-10 border-y-4 border-black mb-12">
-      <div className="whitespace-nowrap font-black font-mono text-4xl md:text-6xl text-black flex items-center gap-8" style={{ transform: `translateX(${offset}px)` }}>
+      <div className="whitespace-nowrap font-black font-mono text-1.5xl md:text-3xl text-black flex items-center gap-8" style={{ transform: `translateX(${offset}px)` }}>
         {[...Array(20)].map((_, i) => (
           <span key={i} className="flex items-center gap-8">
             {phrases[i % phrases.length]} <Ban size={32} strokeWidth={4} />
