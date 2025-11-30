@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Twitter, ArrowUpRight, Trophy, Zap, MessageCircle, Heart, Repeat, Ban, TrendingUp, AlertTriangle, X as XIcon, Terminal, Power, Copy, Check } from 'lucide-react';
+import { Twitter, ArrowUpRight, Trophy, Zap, MessageCircle, Heart, Repeat, Ban, TrendingUp, AlertTriangle, X as XIcon, Terminal, Power, Copy, Check, ScanLine } from 'lucide-react';
 
 /* --- 1. GLOBAL STYLES & ANIMATIONS --- */
 const GlobalStyles = () => (
@@ -22,7 +22,8 @@ const GlobalStyles = () => (
       user-select: none;
     }
 
-    ::-webkit-scrollbar { width: 0px; background: transparent; }
+    ::-webkit-scrollbar { width: 4px; background: #111; }
+    ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
 
     .font-anton { font-family: 'Anton', sans-serif; }
     .font-cinzel { font-family: 'Cinzel', serif; }
@@ -37,7 +38,7 @@ const GlobalStyles = () => (
       background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
     }
 
-    /* Background W gentle movement + Drift */
+    /* Main Background Drifters - Strong Physics */
     @keyframes slow-drift {
         0% { transform: translate(0, 0) rotate(0deg); opacity: 0.1; }
         50% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0.05; }
@@ -46,15 +47,6 @@ const GlobalStyles = () => (
     .w-drifter {
         animation: slow-drift var(--duration) linear infinite;
         will-change: transform, opacity;
-    }
-
-    /* Logo Breathing "Life" Animation */
-    @keyframes breathe-glow {
-        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(204, 255, 0, 0.3)); }
-        50% { transform: scale(1.05); filter: drop-shadow(0 0 20px rgba(204, 255, 0, 0.6)); }
-    }
-    .logo-alive {
-        animation: breathe-glow 4s ease-in-out infinite;
     }
 
     /* Glitch Animation */
@@ -78,7 +70,7 @@ const GlobalStyles = () => (
       will-change: transform;
     }
 
-    /* Tweet Cards - RESTORED HOVER STYLES */
+    /* Tweet Cards */
     .tweet-card {
       transition: all 0.3s ease;
       transform-style: preserve-3d;
@@ -120,22 +112,27 @@ const GlobalStyles = () => (
       0% { opacity: 0.8; transform: scale(1) rotate(0deg); }
       100% { opacity: 0; transform: scale(0.2) rotate(180deg); }
     }
+
+    /* --- SPECIAL EFFECTS FOR "ENTER THE ARENA" BUTTON --- */
+    @keyframes scanline-sweep {
+      0% { top: -100%; opacity: 0; }
+      50% { opacity: 1; }
+      100% { top: 200%; opacity: 0; }
+    }
+    .group:hover .scanline {
+      animation: scanline-sweep 1s linear infinite;
+    }
   `}</style>
 );
 
-/* --- 2. SOUND ENGINE (PROCEDURAL AUDIO) --- */
+/* --- 2. SOUND ENGINE --- */
 const SoundEngine = {
     ctx: null,
     arenaOsc: null,
     arenaGain: null,
-    
     init: () => {
-        if (!SoundEngine.ctx) {
-            SoundEngine.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (SoundEngine.ctx && SoundEngine.ctx.state === 'suspended') {
-            SoundEngine.ctx.resume().catch(() => {});
-        }
+        if (!SoundEngine.ctx) SoundEngine.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (SoundEngine.ctx && SoundEngine.ctx.state === 'suspended') SoundEngine.ctx.resume().catch(() => {});
     },
     playTone: (freq, type, duration, vol = 0.1) => {
         if (!SoundEngine.ctx) return;
@@ -158,23 +155,16 @@ const SoundEngine = {
     startArenaLoop: () => {
         SoundEngine.init();
         if (!SoundEngine.ctx) return;
-        if (SoundEngine.arenaOsc) {
-            SoundEngine.stopArenaLoop();
-        }
-
+        if (SoundEngine.arenaOsc) SoundEngine.stopArenaLoop();
         const osc = SoundEngine.ctx.createOscillator();
         const gain = SoundEngine.ctx.createGain();
-        
         osc.frequency.setValueAtTime(60, SoundEngine.ctx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(400, SoundEngine.ctx.currentTime + 15);
-        
         gain.gain.setValueAtTime(0.2, SoundEngine.ctx.currentTime);
         gain.gain.linearRampToValueAtTime(0.4, SoundEngine.ctx.currentTime + 15);
-        
         osc.connect(gain);
         gain.connect(SoundEngine.ctx.destination);
         osc.start();
-        
         SoundEngine.arenaOsc = osc;
         SoundEngine.arenaGain = gain;
     },
@@ -185,18 +175,16 @@ const SoundEngine = {
             SoundEngine.arenaGain.gain.setValueAtTime(SoundEngine.arenaGain.gain.value, now);
             SoundEngine.arenaGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
             SoundEngine.arenaOsc.stop(now + 0.1);
-            
             SoundEngine.arenaOsc = null;
             SoundEngine.arenaGain = null;
         }
     }
 };
 
-/* --- 3. DATA: CONTENT MANAGEMENT --- */
-/* --- 3. DATA: CONTENT MANAGEMENT --- */
+/* --- 3. DATA & CONFIG --- */
 const MOCK_TWEETS = [
   // --- BATCH 1 ---
-  {
+   {
     id: 1,
     handle: "@Jeremybtc",
     pfp: "/pfp1.jpg", // Changed to .jpg
@@ -328,9 +316,9 @@ const MOCK_TWEETS = [
     rotation: "rotate-2",
     url: " https://x.com/_Shadow36/status/1993104819092156824?s=20 " 
   }
+
 ];
 
-// NEW: DID YOU KNOW FACTS ARRAY
 const DID_YOU_KNOW_FACTS = [
     "Winning is 10% luck, 20% skill, and 70% holding $W until your hands turn into diamonds.",
     "Scientists have confirmed that the shape of the letter 'W' is aerodynamically incapable of losing.",
@@ -346,65 +334,46 @@ const DID_YOU_KNOW_FACTS = [
 
 /* --- 4. SUB-COMPONENTS --- */
 
-// CONTRACT ADDRESS COMPONENT
+// SCROLL PROGRESS BAR
+const ScrollProgress = () => {
+    const [progress, setProgress] = useState(0);
+    useEffect(() => {
+        const handleScroll = () => {
+            const totalScroll = document.documentElement.scrollTop;
+            const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scroll = `${totalScroll / windowHeight}`;
+            setProgress(Number(scroll));
+        }
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+    return (
+        <div className="fixed top-0 left-0 h-1 bg-[var(--accent)] z-[100] transition-all duration-100 ease-out shadow-[0_0_10px_var(--accent)]" style={{ width: `${progress * 100}%` }} />
+    );
+};
+
+// CONTRACT ADDRESS
 const ContractAddress = () => {
     const [copied, setCopied] = useState(false);
-    // EDIT CA HERE
     const ca = "0xW000000000000000000000000000000000000000"; 
-
     const handleCopy = (e) => {
-        e.stopPropagation(); // NO SOUND HERE
-        
-        const fallbackCopy = () => {
-             const textArea = document.createElement("textarea");
-             textArea.value = ca;
-             document.body.appendChild(textArea);
-             textArea.select();
-             try {
-                document.execCommand("copy");
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-             } catch (err) {
-                console.error('Fallback copy failed', err);
-             }
-             document.body.removeChild(textArea);
-        };
-
+        e.stopPropagation();
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(ca)
-                .then(() => {
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                })
-                .catch((err) => {
-                    console.warn('Clipboard API blocked, using fallback', err);
-                    fallbackCopy();
-                });
-        } else {
-             fallbackCopy();
+            navigator.clipboard.writeText(ca).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
         }
     };
-
     return (
-        <div 
-            className="group relative flex items-center gap-2 bg-neutral-900 border border-neutral-700 px-4 py-2 mt-8 mb-4 font-mono text-xs md:text-sm text-neutral-400 hover:border-[var(--accent)] hover:text-white transition-all cursor-pointer select-none overflow-hidden"
-            onClick={handleCopy}
-        >
+        <div className="group relative flex items-center gap-2 bg-neutral-900 border border-neutral-700 px-4 py-2 mt-8 mb-4 font-mono text-xs md:text-sm text-neutral-400 hover:border-[var(--accent)] hover:text-white transition-all cursor-pointer select-none overflow-hidden" onClick={handleCopy}>
             <span className="text-[var(--accent)] font-bold">CA:</span>
             <span className="truncate max-w-[150px] md:max-w-xs">{ca}</span>
             <div className="ml-2 w-px h-4 bg-neutral-700 group-hover:bg-[var(--accent)]"></div>
             {copied ? <Check size={16} className="text-[var(--accent)]" /> : <Copy size={16} />}
-            
-            {copied && (
-                <div className="absolute inset-0 bg-[var(--accent)] text-black flex items-center justify-center font-bold tracking-widest animate-in slide-in-from-bottom duration-200">
-                    COPIED
-                </div>
-            )}
+            {copied && <div className="absolute inset-0 bg-[var(--accent)] text-black flex items-center justify-center font-bold tracking-widest animate-in slide-in-from-bottom duration-200">COPIED</div>}
         </div>
     );
 };
 
-// Dominance Index
+// DOMINANCE INDEX
 const DominanceIndex = ({ score }) => (
   <div className="fixed bottom-4 right-4 z-[9000] bg-black border border-[var(--accent)] p-3 font-mono text-xs md:text-sm text-[var(--accent)] uppercase tracking-wider select-none shadow-[0_0_10px_rgba(204,255,0,0.3)]">
     <span className="animate-pulse mr-2">●</span>
@@ -412,7 +381,7 @@ const DominanceIndex = ({ score }) => (
   </div>
 );
 
-// Cursor Trail
+// CURSOR TRAIL
 const CursorTrail = () => {
   const [trail, setTrail] = useState([]);
   useEffect(() => {
@@ -426,74 +395,48 @@ const CursorTrail = () => {
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
   }, []);
-  return (
-    <>{trail.map(p => (<div key={p.id} className="trail-w text-sm" style={{ left: p.x, top: p.y }}>W</div>))}</>
-  );
+  return <>{trail.map(p => (<div key={p.id} className="trail-w text-sm" style={{ left: p.x, top: p.y }}>W</div>))}</>;
 };
 
-// Floating Background Ws (WITH PARALLAX SCROLL REACTION)
+// FLOATING BACKGROUND W'S (STRONG PHYSICS RESTORED)
 const FloatingWs = () => {
   const [elements, setElements] = useState([]);
   const [scrollY, setScrollY] = useState(0);
-
   useEffect(() => {
-    const handleScroll = () => {
-        requestAnimationFrame(() => setScrollY(window.scrollY));
-    };
+    const handleScroll = () => requestAnimationFrame(() => setScrollY(window.scrollY));
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
   useEffect(() => {
     const fonts = ['font-anton', 'font-cinzel', 'font-mono', 'font-comic', 'font-gothic'];
-    const newElements = Array.from({ length: 20 }).map((_, i) => ({
+    setElements(Array.from({ length: 20 }).map((_, i) => ({
       id: i,
       x: Math.random() * 100, y: Math.random() * 100,
       size: Math.random() * 8 + 2,
       font: fonts[Math.floor(Math.random() * fonts.length)],
       rotation: Math.random() * 360,
       opacity: Math.random() * 0.2 + 0.05,
-      // CSS Variables for the animation
-      // REVERTED TO STRONGER PHYSICS FOR MAIN BACKGROUND
       duration: `${Math.random() * 40 + 60}s`,
       dx: `${Math.random() * 200 - 100}px`, 
       dy: `${Math.random() * 200 - 100}px`,
       rot: `${Math.random() * 90 - 45}deg`
-    }));
-    setElements(newElements);
+    })));
   }, []);
-
   return (
-    <div 
-        className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
-        // REVERTED TO 0.1 FOR STRONGER PARALLAX ON MAIN BACKGROUND
-        style={{ transform: `translateY(${scrollY * 0.1}px)` }} 
-    >
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" style={{ transform: `translateY(${scrollY * 0.1}px)` }}>
       {elements.map(el => (
-        <div 
-            key={el.id} 
-            className={`absolute text-white select-none w-drifter ${el.font}`} 
-            style={{
-                left: `${el.x}%`, top: `${el.y}%`, fontSize: `${el.size}rem`,
-                '--duration': el.duration, 
-                '--dx': el.dx, 
-                '--dy': el.dy, 
-                '--rot': el.rot,
-                opacity: el.opacity,
-            }}
-        >W</div>
+        <div key={el.id} className={`absolute text-white select-none w-drifter ${el.font}`} style={{ left: `${el.x}%`, top: `${el.y}%`, fontSize: `${el.size}rem`, '--duration': el.duration, '--dx': el.dx, '--dy': el.dy, '--rot': el.rot, opacity: el.opacity }}>W</div>
       ))}
     </div>
   );
 };
 
-// Velocity Marquee
+// VELOCITY MARQUEE
 const VelocityMarquee = () => {
   const [offset, setOffset] = useState(0);
   const rafRef = useRef();
   const lastScrollY = useRef(0);
-  const phrases = ["NO Ls ALLOWED", "STRICTLY Ws"]; 
-
+  const phrases = ["NO Ls ALLOWED", "OMEGA WIN", "W IS THE CODE"]; 
   const animate = useCallback(() => {
     const currentScrollY = window.scrollY;
     const velocity = Math.abs(currentScrollY - lastScrollY.current);
@@ -502,63 +445,32 @@ const VelocityMarquee = () => {
     setOffset(prev => (prev - speed) % 1000); 
     rafRef.current = requestAnimationFrame(animate);
   }, []);
-
   useEffect(() => {
     rafRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafRef.current);
   }, [animate]);
-
   return (
     <div className="relative w-full overflow-hidden bg-[var(--accent)] py-2 md:py-4 -rotate-2 scale-110 z-10 border-y-4 border-black mb-12">
-      <div className="whitespace-nowrap font-black font-mono text-1.5xl md:text-3xl text-black flex items-center gap-8" style={{ transform: `translateX(${offset}px)` }}>
-        {[...Array(20)].map((_, i) => (
-          <span key={i} className="flex items-center gap-8">
-            {phrases[i % phrases.length]} <Ban size={32} strokeWidth={4} />
-          </span>
-        ))}
+      <div className="whitespace-nowrap font-black font-mono text-1xl md:text-2xl text-black flex items-center gap-8" style={{ transform: `translateX(${offset}px)` }}>
+        {[...Array(20)].map((_, i) => <span key={i} className="flex items-center gap-8">{phrases[i % phrases.length]} <Ban size={32} strokeWidth={4} /></span>)}
       </div>
     </div>
   );
 };
 
-// Tweet Card (REVERTED CONTENT FONT TO MONO)
+// TWEET CARD
 const TweetCard = ({ tweet }) => {
     const { comments, url, rotation, isAlert, handle, highlight, code, retweets, likes, pfp } = tweet;
-
     return (
-        <div 
-            className={`tweet-card w-full max-w-md mx-auto border border-neutral-800 p-6 mb-8 cursor-pointer relative overflow-hidden group ${rotation}`}
-            onClick={(e) => {
-                e.stopPropagation(); // NO SOUND HERE
-                window.open(url, '_blank');
-            }}
-        >
+        <div className={`tweet-card w-full max-w-md mx-auto border border-neutral-800 p-6 mb-8 cursor-pointer relative overflow-hidden group ${rotation}`} onClick={(e) => { e.stopPropagation(); window.open(url, '_blank'); }}>
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-[var(--accent)] to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
             <div className="flex justify-between items-start mb-4 relative z-10">
                 <div className="flex items-center gap-3">
-                    {/* PROFILE PICTURE LOGIC */}
                     <div className="w-10 h-10 rounded-full overflow-hidden border border-neutral-700 group-hover:border-[var(--accent)] transition-colors">
-                        {pfp ? (
-                            <img 
-                                src={pfp} 
-                                alt={handle} 
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                    e.target.onerror = null; 
-                                    e.target.style.display = 'none'; // Hide broken image
-                                    e.target.parentNode.classList.add('fallback-w'); // Show fallback
-                                }}
-                            />
-                        ) : null}
-                        {/* Fallback "W" if no image or error */}
-                        <div className={`w-full h-full items-center justify-center bg-neutral-800 text-[var(--accent)] font-bold hidden ${!pfp ? '!flex' : ''} fallback-w-content`}>
-                            W
-                        </div>
-                        <style>{`
-                            .fallback-w .fallback-w-content { display: flex !important; }
-                        `}</style>
+                        {pfp ? <img src={pfp} alt={handle} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.classList.add('fallback-w'); }} /> : null}
+                        <div className={`w-full h-full items-center justify-center bg-neutral-800 text-[var(--accent)] font-bold hidden ${!pfp ? '!flex' : ''} fallback-w-content`}>W</div>
+                        <style>{`.fallback-w .fallback-w-content { display: flex !important; }`}</style>
                     </div>
-
                     <div className="flex flex-col">
                         <span className={`font-bold font-mono group-hover:text-[var(--accent)] ${isAlert ? 'text-red-500' : 'text-neutral-200'}`}>{handle}</span>
                         <span className="text-xs text-neutral-500 font-mono">@project_w</span>
@@ -566,14 +478,7 @@ const TweetCard = ({ tweet }) => {
                 </div>
                 <Twitter className="w-5 h-5 text-neutral-600 group-hover:text-blue-400 transition-colors" />
             </div>
-            
-            {/* CONTENT - REVERTED TO FONT-MONO */}
-            {code ? (
-                <div className="bg-black p-3 rounded border border-neutral-800 mb-4 font-mono text-xs text-green-400">{tweet.content}</div>
-            ) : (
-                <p className={`text-xl mb-6 text-neutral-100 leading-snug font-mono ${highlight ? 'text-[var(--accent)]' : ''}`}>{tweet.content}</p>
-            )}
-            
+            {code ? <div className="bg-black p-3 rounded border border-neutral-800 mb-4 font-mono text-xs text-green-400">{tweet.content}</div> : <p className={`text-xl mb-6 text-neutral-100 leading-snug font-mono ${highlight ? 'text-[var(--accent)]' : ''}`}>{tweet.content}</p>}
             <div className="flex justify-between text-neutral-500 text-sm font-mono relative z-10">
                 <div className="flex gap-4">
                     <span className="flex items-center gap-1 hover:text-pink-500 transition-colors"><MessageCircle size={14} /> {comments}</span> 
@@ -586,57 +491,32 @@ const TweetCard = ({ tweet }) => {
     );
 };
 
-// LIVE CHART SECTION
-const LiveChartSection = () => {
-    return (
-        <div className="break-inside-avoid w-full border-4 border-[var(--accent)] bg-black mb-8 relative overflow-hidden group">
-            <div className="absolute top-0 left-0 bg-[var(--accent)] text-black font-mono text-xs font-bold px-2 py-1 z-20">
-                LIVE MARKET DATA // $W
-            </div>
-            {/* PASTE DEXSCREENER EMBED CODE HERE */}
-            <div className="w-full h-[400px] flex items-center justify-center bg-neutral-900 text-neutral-500 font-mono text-center p-8">
-                 <div className="flex flex-col items-center animate-pulse">
-                    <TrendingUp size={48} className="mb-4 text-[var(--accent)]"/>
-                    <p>CHART FEED INITIALIZING...</p>
-                    <p className="text-xs mt-2 opacity-50">(Edit code to insert Dexscreener Iframe)</p>
-                 </div>
-            </div>
+// LIVE CHART
+const LiveChartSection = () => (
+    <div className="break-inside-avoid w-full border-4 border-[var(--accent)] bg-black mb-8 relative overflow-hidden group">
+        <div className="absolute top-0 left-0 bg-[var(--accent)] text-black font-mono text-xs font-bold px-2 py-1 z-20">LIVE MARKET DATA // $W</div>
+        <div className="w-full h-[400px] flex items-center justify-center bg-neutral-900 text-neutral-500 font-mono text-center p-8">
+             <div className="flex flex-col items-center animate-pulse"><TrendingUp size={48} className="mb-4 text-[var(--accent)]"/><p>CHART FEED INITIALIZING...</p></div>
         </div>
-    );
-};
+    </div>
+);
 
-// Interactive "Did You Know" Component
+// DID YOU KNOW BOX
 const DidYouKnowBox = () => {
     const [index, setIndex] = useState(0);
     const [animating, setAnimating] = useState(false);
-
-    const handleNext = (e) => {
-        e.stopPropagation(); // NO SOUND HERE
-        setAnimating(false);
-        // Force reflow for animation restart
-        setTimeout(() => {
-            setIndex((prev) => (prev + 1) % DID_YOU_KNOW_FACTS.length);
-            setAnimating(true);
-        }, 10);
-    };
-
+    const handleNext = (e) => { e.stopPropagation(); setAnimating(false); setTimeout(() => { setIndex((prev) => (prev + 1) % DID_YOU_KNOW_FACTS.length); setAnimating(true); }, 10); };
     return (
-        <div 
-             className="break-inside-avoid p-8 bg-[var(--accent)] text-black mb-8 transform rotate-3 hover:rotate-0 transition-transform duration-300 cursor-pointer select-none relative overflow-hidden group"
-             onClick={handleNext}
-        >
+        <div className="break-inside-avoid p-8 bg-[var(--accent)] text-black mb-8 transform rotate-3 hover:rotate-0 transition-transform duration-300 cursor-pointer select-none relative overflow-hidden group" onClick={handleNext}>
              <div className="absolute top-2 right-2 opacity-50"><Repeat size={16}/></div>
              <h3 className="font-anton text-4xl uppercase mb-2">Did you know?</h3>
-             <p className={`font-mono text-sm leading-relaxed ${animating ? 'fact-slide' : ''}`} key={index}>
-                {DID_YOU_KNOW_FACTS[index]}
-             </p>
+             <p className={`font-mono text-sm leading-relaxed ${animating ? 'fact-slide' : ''}`} key={index}>{DID_YOU_KNOW_FACTS[index]}</p>
              <p className="text-[10px] font-bold mt-4 opacity-60 uppercase tracking-widest">TAP FOR MORE TRUTH</p>
         </div>
     );
 };
 
-
-// ARENA MODE: THE HIVEMIND (3D Neural Network)
+// ARENA MODE
 
 const ArenaOverlay = ({ onExit }) => {
     const canvasRef = useRef(null);
@@ -1117,7 +997,6 @@ const ArenaOverlay = ({ onExit }) => {
     );
 };
 
-
 /* --- 5. MAIN APP --- */
 const App = () => {
   const [scrollVelocity, setScrollVelocity] = useState(0);
@@ -1126,146 +1005,103 @@ const App = () => {
   const [dominanceScore, setDominanceScore] = useState(0);
   const [clicks, setClicks] = useState([]);
   const [inArena, setInArena] = useState(false);
-  const [heroVisible, setHeroVisible] = useState(false); // Controls the button slide-in
+  const [heroVisible, setHeroVisible] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   
   const lastScrollY = useRef(0);
   const containerRef = useRef(null);
 
-  // Scroll Velocity Logic
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const velocity = currentScrollY - lastScrollY.current;
       setScrollVelocity(v => v * 0.9 + velocity * 0.1);
       lastScrollY.current = currentScrollY;
+      setScrolled(currentScrollY > 50); // TRIGGER FOR LOGO CHANGE
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Idle reset
   useEffect(() => {
-    const interval = setInterval(() => {
-      setScrollVelocity(v => {
-        if (Math.abs(v) < 0.1) return 0;
-        return v * 0.8;
-      });
-    }, 50);
+    const interval = setInterval(() => { setScrollVelocity(v => { if (Math.abs(v) < 0.1) return 0; return v * 0.8; }); }, 50);
     return () => clearInterval(interval);
   }, []);
 
-  // Global Click Handler (THE ONLY SOUND)
   useEffect(() => {
     const fonts = ['font-anton', 'font-cinzel', 'font-mono', 'font-comic', 'font-gothic'];
     const handleClick = (e) => {
-      // If we are clicking a button that stopped propagation, this won't fire?
-      // No, stopping propagation stops bubbling UP. This listener is on window.
-      // Events bubble up to window. If we stop prop on button, it WON'T reach window.
-      // So logic: Button click -> stopProp -> No global click. Perfect.
-      
-      SoundEngine.init(); 
-      SoundEngine.click();
-      setDominanceScore(prev => prev + 1); 
-
+      SoundEngine.init(); SoundEngine.click(); setDominanceScore(prev => prev + 1); 
       const id = Date.now();
-      const newClick = {
-        id, x: e.clientX, y: e.clientY,
-        rot: Math.random() * 90 - 45 + 'deg',
-        font: fonts[Math.floor(Math.random() * fonts.length)],
-        color: Math.random() > 0.5 ? 'var(--accent)' : '#fff'
-      };
+      const newClick = { id, x: e.clientX, y: e.clientY, rot: Math.random() * 90 - 45 + 'deg', font: fonts[Math.floor(Math.random() * fonts.length)], color: Math.random() > 0.5 ? 'var(--accent)' : '#fff' };
       setClicks(prev => [...prev, newClick]);
       setTimeout(() => setClicks(prev => prev.filter(c => c.id !== id)), 700);
     };
-
     window.addEventListener('click', handleClick);
     return () => window.removeEventListener('click', handleClick);
   }, []);
 
-  const handleClaimVictory = (e) => {
-      e.stopPropagation(); // NO SOUND
-      setIsVictoryMode(true);
-      setClaimText("WINNER DETECTED");
-      setTimeout(() => setIsVictoryMode(false), 600);
-      setTimeout(() => setClaimText("Claim Victory"), 3000);
-  };
-
+  const handleClaimVictory = (e) => { e.stopPropagation(); setIsVictoryMode(true); setClaimText("WINNER DETECTED"); setTimeout(() => setIsVictoryMode(false), 600); setTimeout(() => setClaimText("Claim Victory"), 3000); };
   const skewAmount = Math.min(Math.max(scrollVelocity * 0.2, -10), 10);
 
-  // Auto-reveal for button on mount
-  useEffect(() => {
-      const timer = setTimeout(() => setHeroVisible(true), 300);
-      return () => clearTimeout(timer);
-  }, []);
+  useEffect(() => { const timer = setTimeout(() => setHeroVisible(true), 300); return () => clearTimeout(timer); }, []);
 
-  // RENDER ARENA
-  if (inArena) {
-      return (
-        <>
-            <GlobalStyles />
-            <ArenaOverlay onExit={() => setInArena(false)} />
-        </>
-      );
-  }
+  if (inArena) return <><GlobalStyles /><ArenaOverlay onExit={() => setInArena(false)} /></>;
 
   return (
     <div className={`min-h-screen bg-black text-white overflow-x-hidden selection:bg-[var(--accent)] selection:text-black ${isVictoryMode ? 'victory-mode' : ''}`}>
       <GlobalStyles />
       <div className="noise" />
+      <ScrollProgress />
       <FloatingWs />
       <CursorTrail />
       <DominanceIndex score={dominanceScore} />
 
-      {/* Click Explosions Render */}
-      {clicks.map(c => (
-        <div key={c.id} className={`click-w text-4xl ${c.font}`} style={{ left: c.x, top: c.y, '--rot': c.rot, color: c.color }}>W</div>
-      ))}
+      {/* CLICKS */}
+      {clicks.map(c => (<div key={c.id} className={`click-w text-4xl ${c.font}`} style={{ left: c.x, top: c.y, '--rot': c.rot, color: c.color }}>W</div>))}
 
-      {/* NAVIGATION - CHANGED TO ABSOLUTE SO IT SCROLLS AWAY */}
-      <nav className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50">
-        {/* REPLACED: TEXT 'W' WITH LOGO IMAGE & "ALIVE" ANIMATION */}
-        <div className="logo-alive transition-transform cursor-pointer">
+      {/* REACTIVE LOGO HUD */}
+      <div 
+        className={`fixed top-0 left-0 p-6 z-50 transition-all duration-500 ease-out ${scrolled ? 'scale-75 backdrop-blur-md border-b border-[var(--accent)] bg-black/50' : ''}`}
+        style={{ width: scrolled ? 'auto' : '100%', borderRadius: scrolled ? '0 0 20px 0' : '0' }}
+      >
+        <div className="hover:scale-110 transition-transform cursor-pointer flex items-center gap-4">
             <img 
                 src="/logo.png" 
                 alt="Project W Logo" 
-                className="h-12 md:h-16 w-auto object-contain"
-                onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'block';
-                }}
+                className={`h-12 md:h-16 w-auto object-contain transition-all ${scrolled ? 'logo-alive' : ''}`}
+                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
                 onClick={(e) => e.stopPropagation()} 
             />
-            {/* Fallback Text hidden by default */}
             <div className="hidden text-4xl font-black font-anton tracking-tighter" onClick={(e) => e.stopPropagation()}>W</div>
+            
+            {/* Scrolled Data Stream Effect */}
+            <div className={`overflow-hidden transition-all duration-500 ${scrolled ? 'w-32 opacity-100' : 'w-0 opacity-0'}`}>
+                 <div className="font-mono text-[10px] text-[var(--accent)] leading-none whitespace-nowrap">
+                    SYSTEM: ONLINE<br/>
+                    TARGET: MOON<br/>
+                    VIBE: IMMACULATE
+                 </div>
+            </div>
         </div>
+      </div>
 
+      {/* ACQUIRE BUTTON (FIXED TOP RIGHT) */}
+      <div className="fixed top-6 right-6 z-50">
         <button 
           className="border-2 border-[var(--accent)] text-[var(--accent)] px-6 py-2 md:px-8 md:py-2 rounded-full font-mono text-xs md:text-sm bg-black hover:bg-[var(--accent)] hover:text-black transition-all hover:scale-105 hover:rotate-2 uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(204,255,0,0.3)]"
-          onClick={(e) => {
-              e.stopPropagation(); // NO SOUND
-              window.open('https://app.uniswap.org/', '_blank');
-          }}
+          onClick={(e) => { e.stopPropagation(); window.open('https://app.uniswap.org/', '_blank'); }}
         >
           <span>ACQUIRE $W</span>
         </button>
-      </nav>
+      </div>
 
       {/* HERO SECTION */}
       <section className="relative min-h-[90vh] flex flex-col items-center justify-center p-4 z-10">
         <div className="elastic-content text-center flex flex-col items-center" style={{ transform: `skewY(${skewAmount}deg)` }}>
-          <div className="mb-4 text-[var(--accent)] font-mono text-sm tracking-[0.5em] animate-bounce">
-            TICKER: $W
-          </div>
+          <div className="mb-4 text-[var(--accent)] font-mono text-sm tracking-[0.5em] animate-bounce">TICKER: $W</div>
           
-          <div 
-             className="text-[15vw] leading-[0.8] font-black font-anton uppercase mb-4 cursor-default select-none hover-glitch mix-blend-screen transition-transform duration-100 hover:scale-110 hover:skew-x-12"
-             onClick={(e) => {
-                 // No glitch sound, just let global W pop happen? 
-                 // User said "remove the just win sound"
-                 // If I don't stop propagation, global click runs -> sound + W pop.
-                 // This seems okay as it's not a button, just text.
-             }}
-          >
+          <div className="text-[15vw] leading-[0.8] font-black font-anton uppercase mb-4 cursor-default select-none hover-glitch mix-blend-screen transition-transform duration-100 hover:scale-110 hover:skew-x-12" onClick={(e) => {}}>
              JUST<br />WIN
           </div>
 
@@ -1275,18 +1111,17 @@ const App = () => {
             Not a project. A state of being. The ticker is $W. The vibe is absolute victory. Welcome to the winner's circle.
           </p>
 
-          {/* BUTTON FIX: ACID GREEN BG + BLACK TEXT + SLIDE UP REVEAL */}
-          <div className={`transition-all duration-1000 ease-out transform ${heroVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
+          {/* THE NEW "ENTER THE ARENA" CYBER-BUTTON */}
+          <div className={`transition-opacity duration-1000 delay-300 ${heroVisible ? 'opacity-100' : 'opacity-0'}`}>
               <button 
-                className="group relative px-12 py-6 bg-[var(--accent)] text-black font-black text-2xl uppercase tracking-tighter overflow-hidden border-2 border-[var(--accent)] hover:border-white transition-all shadow-[0_0_20px_rgba(204,255,0,0.4)] hover:shadow-[0_0_40px_rgba(204,255,0,0.8)]"
-                onClick={(e) => {
-                    e.stopPropagation(); // NO SOUND
-                    setInArena(true);
-                }}
+                className="group relative px-10 py-4 bg-transparent border-2 border-dashed border-[var(--accent)] text-[var(--accent)] font-mono text-lg uppercase tracking-[0.2em] overflow-hidden hover:border-solid hover:shadow-[0_0_30px_rgba(204,255,0,0.6)] hover:bg-[var(--accent)] hover:text-black transition-all duration-300"
+                onClick={(e) => { e.stopPropagation(); setInArena(true); }}
               >
-                <span className="relative z-10">Hyper Object</span>
-                {/* Optional: darker green swipe on hover */}
-                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-200" />
+                <span className="relative z-10 font-bold flex items-center gap-2">
+                    Hyper Object <ScanLine className="hidden group-hover:block animate-spin" size={11}/>
+                </span>
+                {/* Scanline Effect */}
+                <div className="scanline absolute left-0 w-full h-[2px] bg-white opacity-50 z-0 pointer-events-none" />
               </button>
           </div>
         </div>
@@ -1294,48 +1129,31 @@ const App = () => {
 
       <VelocityMarquee />
 
-      {/* MAIN CONTENT FEED */}
+      {/* FEED */}
       <section className="relative z-20 pb-24 px-4 md:px-12 bg-black/50 backdrop-blur-sm">
-        
         <div className="mb-24 text-center">
           <h2 className="text-6xl md:text-8xl font-anton text-white mb-4 transform -rotate-2 select-none">THE FEED</h2>
           <div className="w-24 h-2 bg-[var(--accent)] mx-auto animate-pulse" />
         </div>
 
         <div ref={containerRef} className="elastic-content max-w-7xl mx-auto columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8" style={{ transform: `skewY(${skewAmount * 0.5}deg)` }}>
-          
           <LiveChartSection />
-
-          {MOCK_TWEETS.map((tweet) => (
-            <div key={tweet.id} className="break-inside-avoid">
-              <TweetCard tweet={tweet} />
-            </div>
-          ))}
-          
+          {MOCK_TWEETS.map((tweet) => ( <div key={tweet.id} className="break-inside-avoid"><TweetCard tweet={tweet} /></div> ))}
           <DidYouKnowBox />
-
-          <div 
-              className={`break-inside-avoid p-12 border-4 ${claimText === 'WINNER DETECTED' ? 'border-[var(--accent)] bg-[var(--accent)] text-black scale-110' : 'border-white text-white hover:bg-white hover:text-black'} mb-8 text-center transition-all duration-100 cursor-pointer group select-none`}
-              onClick={handleClaimVictory}
-          >
+          <div className={`break-inside-avoid p-12 border-4 ${claimText === 'WINNER DETECTED' ? 'border-[var(--accent)] bg-[var(--accent)] text-black scale-110' : 'border-white text-white hover:bg-white hover:text-black'} mb-8 text-center transition-all duration-100 cursor-pointer group select-none`} onClick={handleClaimVictory}>
             <Trophy size={64} className={`mx-auto mb-4 ${claimText === 'WINNER DETECTED' ? 'animate-bounce' : 'group-hover:animate-spin'}`} />
             <h3 className="font-cinzel text-2xl font-bold">{claimText}</h3>
           </div>
         </div>
-
       </section>
 
       {/* FOOTER */}
       <footer className="relative z-20 py-24 bg-[var(--accent)] text-black overflow-hidden">
         <div className="absolute inset-0 opacity-10">
            {Array.from({length: 10}).map((_, i) => (
-             <div key={i} className="absolute text-9xl font-black" style={{ 
-               top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%`, 
-               transform: `rotate(${Math.random() * 360}deg) translateY(${scrollVelocity * 0.05}px)` 
-             }}>W</div>
+             <div key={i} className="absolute text-9xl font-black" style={{ top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%`, transform: `rotate(${Math.random() * 360}deg) translateY(${scrollVelocity * 0.5}px)` }}>W</div>
            ))}
         </div>
-
         <div className="container mx-auto px-6 relative z-10 flex flex-col md:flex-row justify-between items-end">
           <div>
             <h2 className="text-9xl font-black font-anton leading-none tracking-tighter mb-4 select-none">KEEP<br/>WINNING</h2>
@@ -1345,11 +1163,7 @@ const App = () => {
               <a href="#" className="hover:underline decoration-4">Chart</a>
             </div>
           </div>
-          
-          <div className="mt-12 md:mt-0 text-right">
-            <p className="font-mono text-xs max-w-xs ml-auto mb-4 font-bold">Paper hands are a myth. We only know diamond grips and green candles. This is financial advice: Win.</p>
-            <div className="text-4xl font-gothic animate-pulse">© 2025</div>
-          </div>
+          <div className="mt-12 md:mt-0 text-right"><p className="font-mono text-xs max-w-xs ml-auto mb-4 font-bold">Paper hands are a myth. We only know diamond grips and green candles. This is financial advice: Win.</p><div className="text-4xl font-gothic animate-pulse">© 2025</div></div>
         </div>
       </footer>
     </div>
