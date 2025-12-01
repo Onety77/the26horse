@@ -552,172 +552,494 @@ const Footer = () => {
 };
 
 /* --- 6. ARENA ENGINE --- */
+
 const Arena = ({ onExit }) => {
     const canvasRef = useRef(null);
     const requestRef = useRef();
-    const [nodeCount, setNodeCount] = useState(0); 
     
-    // Mutable State for Physics
+    // UI State for Score
+    const [currentImpacts, setCurrentImpacts] = useState(0);
+    const [bestImpacts, setBestImpacts] = useState(0);
+    const [status, setStatus] = useState("IDLE");
+
+    // Mutable Physics & Game State
     const state = useRef({
-        nodes: [],
-        pulses: [], 
-        rotation: { x: 0, y: 0 },
-        targetRotation: { x: 0, y: 0 },
+        // SAFETY FLAG: Controls the render loop
+        active: true,
+
+        // POSITION
+        pos: { x: 0, y: 0 },
+        // VELOCITY
+        vel: { x: 0, y: 0 },
+        // ROTATION
+        rot: { x: 0, y: 0, z: 0 },
+        rotVel: { x: 0.01, y: 0.02 },
+
+        // INPUT
         mouse: { x: 0, y: 0 },
-        active: true
+        prevMouse: { x: 0, y: 0 },
+        isDragging: false,
+        
+        // VISUALS
+        trail: [], 
+        particles: [], 
+        floatingTexts: [], 
+        shake: 0, 
+        
+        frame: 0
     });
 
-    useEffect(() => {
-        // Audio Start
-        if (typeof AudioKernel !== 'undefined') {
+    const audioRef = useRef(null);
+
+    // --- 3D MATH HELPER ---
+    const project = (x, y, z, width, height, offsetX, offsetY) => {
+        const scale = 500 / (500 + z); 
+        const x2d = (x * scale) + (width / 2) + offsetX;
+        const y2d = (y * scale) + (height / 2) + offsetY;
+        return { x: x2d, y: y2d };
+    };
+
+    const rotateX = (x, y, z, angle) => {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return { x, y: y * cos - z * sin, z: y * sin + z * cos };
+    };
+
+    const rotateY = (x, y, z, angle) => {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return { x: x * cos - z * sin, y, z: x * sin + z * cos };
+    };
+
+    // --- AUDIO SYSTEM ---
+    const initAudio = () => {
+        if (!audioRef.current) {
             try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const ctx = new AudioContext();
+                
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
-                osc.frequency.setValueAtTime(60, ctx.currentTime);
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                osc.type = 'sine';
                 osc.connect(gain);
                 gain.connect(ctx.destination);
                 osc.start();
-                state.current.audio = { ctx, osc, gain };
+                gain.gain.value = 0;
+
+                const impactGain = ctx.createGain();
+                impactGain.connect(ctx.destination);
+                impactGain.gain.value = 0.5;
+
+                audioRef.current = { ctx, osc, gain, impactGain };
             } catch (e) {
-                console.warn("Arena audio init failed", e);
+                console.warn("Arena audio init failed - continuing without sound", e);
             }
+        } else if (audioRef.current?.ctx?.state === 'suspended') {
+            audioRef.current.ctx.resume().catch(() => {});
         }
+    };
+
+    const playBounce = (intensity) => {
+        if (!audioRef.current) return;
+        const { ctx, impactGain } = audioRef.current;
+        const t = ctx.currentTime;
+        
+        const osc = ctx.createOscillator();
+        osc.connect(impactGain);
+        
+        osc.frequency.setValueAtTime(200, t);
+        osc.frequency.exponentialRampToValueAtTime(50, t + 0.15);
+        
+        impactGain.gain.setValueAtTime(Math.min(intensity * 0.5, 0.5), t);
+        impactGain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+        
+        osc.start(t);
+        osc.stop(t + 0.15);
+    };
+
+    const updateAudio = (speed) => {
+        if (!audioRef.current) return;
+        const { ctx, osc, gain } = audioRef.current;
+        const t = ctx.currentTime;
+        const vol = Math.min(0.1, speed * 0.005); 
+        gain.gain.setTargetAtTime(vol, t, 0.1);
+        osc.frequency.setTargetAtTime(60 + (speed * 5), t, 0.1);
+    };
+
+    // --- VISUAL FX HELPERS ---
+    const spawnParticles = (x, y, color, count, speed) => {
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = Math.random() * speed;
+            state.current.particles.push({
+                x, y,
+                vx: Math.cos(angle) * velocity,
+                vy: Math.sin(angle) * velocity,
+                life: 1.0,
+                color: color,
+                size: Math.random() * 3 + 1
+            });
+        }
+    };
+
+    const spawnFloatingText = (x, y, text, color) => {
+        state.current.floatingTexts.push({
+            x, y, text, color, life: 1.0, dy: -2
+        });
+    };
+
+    // --- MAIN GAME LOOP ---
+    useEffect(() => {
+        // *** CRITICAL FIX FOR LOCAL DEV ***
+        // In strict mode, useEffect runs twice. The first cleanup sets active=false.
+        // We MUST force it true again here, otherwise the second loop instantly dies.
+        state.current.active = true;
 
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
+        
+        // Handle Retina/High-DPI displays to prevent blurriness
+        // This ensures the canvas resolution matches the screen's pixel density
         let width = window.innerWidth;
         let height = window.innerHeight;
-        canvas.width = width;
-        canvas.height = height;
-
-        const NODE_COUNT = width < 768 ? 80 : 180;
-        const CONNECTION_DIST = 100;
-        const ROTATION_SPEED = 0.05;
-
-        for (let i = 0; i < NODE_COUNT; i++) {
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos((Math.random() * 2) - 1);
-            const r = 200 + Math.random() * 200; 
-            state.current.nodes.push({
-                x: r * Math.sin(phi) * Math.cos(theta),
-                y: r * Math.sin(phi) * Math.sin(theta),
-                z: r * Math.cos(phi),
-                baseX: r * Math.sin(phi) * Math.cos(theta),
-                baseY: r * Math.sin(phi) * Math.sin(theta),
-                baseZ: r * Math.cos(phi),
-                pulse: 0, 
-                id: Math.random().toString(36).substr(2, 4).toUpperCase()
-            });
-        }
-
-        const handleResize = () => { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; };
-        const handleMouseMove = (e) => {
-            const nx = (e.clientX / width) * 2 - 1;
-            const ny = (e.clientY / height) * 2 - 1;
-            state.current.targetRotation.y = nx * 2;
-            state.current.targetRotation.x = -ny * 2;
-        };
-        const handleClick = () => {
-            state.current.pulses.push({ r: 0, speed: 15, life: 1.0 });
-        };
-
-        window.addEventListener('resize', handleResize);
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('click', handleClick);
-
-        const rotate3D = (x, y, z, rotX, rotY) => {
-            let cosY = Math.cos(rotY), sinY = Math.sin(rotY), x1 = x * cosY - z * sinY, z1 = z * cosY + x * sinY;
-            let cosX = Math.cos(rotX), sinX = Math.sin(rotX), y2 = y * cosX - z1 * sinX, z2 = z1 * cosX + y * sinX;
-            return { x: x1, y: y2, z: z2 };
-        };
-
-        const loop = () => {
-            if (!state.current.active) return;
-            setNodeCount(prev => Math.min(prev + 11, NODE_COUNT * 442));
-            state.current.rotation.x += (state.current.targetRotation.x - state.current.rotation.x) * ROTATION_SPEED;
-            state.current.rotation.y += (state.current.targetRotation.y - state.current.rotation.y) * ROTATION_SPEED + 0.002;
-
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, width, height);
-
-            const centerX = width / 2;
-            const centerY = height / 2;
+        
+        const handleResize = () => { 
+            width = window.innerWidth; 
+            height = window.innerHeight; 
             
-            const projectedNodes = state.current.nodes.map(node => {
-                if (node.pulse > 0) node.pulse -= 0.05;
-                const r = rotate3D(node.baseX, node.baseY, node.baseZ, state.current.rotation.x, state.current.rotation.y);
-                const scale = 800 / (800 + r.z + 400);
-                const x2d = (r.x * scale) + centerX;
-                const y2d = (r.y * scale) + centerY;
-                state.current.pulses.forEach(p => {
-                     const dist = Math.sqrt(node.baseX**2 + node.baseY**2 + node.baseZ**2);
-                     if (Math.abs(dist - p.r) < 30) node.pulse = 1.0;
-                });
-                return { ...node, x2d, y2d, scale, z: r.z };
-            });
+            // Set actual size in memory (scaled to account for extra pixel density)
+            // Note: We are keeping simple 1:1 mapping for physics simplicity here
+            // to avoid hit-testing bugs, but ensuring full width/height is set.
+            canvas.width = width; 
+            canvas.height = height; 
+        };
 
-            projectedNodes.sort((a, b) => b.z - a.z);
+        // W GEOMETRY
+        const baseW = 120;
+        const h = 120;
+        const d = 40; 
+        const vRaw = [
+            { x: -1.0, y: -0.8 }, { x: -0.8, y: -0.8 }, { x: -0.5, y: 0.5 },
+            { x: 0.0, y: -0.5 }, { x: 0.5, y: 0.5 }, { x: 0.8, y: -0.8 },
+            { x: 1.0, y: -0.8 }, { x: 0.6, y: 0.8 }, { x: 0.0, y: -0.2 },
+            { x: -0.6, y: 0.8 }
+        ];
+        const vertices = [];
+        vRaw.forEach(v => vertices.push({ x: v.x * baseW, y: v.y * h, z: -d }));
+        vRaw.forEach(v => vertices.push({ x: v.x * baseW, y: v.y * h, z: d }));
+        const edges = [
+            [0,1], [1,2], [2,3], [3,4], [4,5], [5,6], [6,7], [7,8], [8,9], [9,0],
+            [10,11], [11,12], [12,13], [13,14], [14,15], [15,16], [16,17], [17,18], [18,19], [19,10],
+            [0,10], [1,11], [2,12], [3,13], [4,14], [5,15], [6,16], [7,17], [8,18], [9,19]
+        ];
 
-            ctx.lineWidth = 1;
-            for (let i = 0; i < projectedNodes.length; i++) {
-                const n1 = projectedNodes[i];
-                for (let j = i + 1; j < projectedNodes.length; j++) {
-                    const n2 = projectedNodes[j];
-                    const dist = Math.sqrt((n1.x2d - n2.x2d)**2 + (n1.y2d - n2.y2d)**2);
-                    if (dist < CONNECTION_DIST * n1.scale) {
-                        const alpha = 1 - (dist / (CONNECTION_DIST * n1.scale));
-                        ctx.strokeStyle = Math.max(n1.pulse, n2.pulse) > 0.1 ? `rgba(255, 255, 255, ${alpha})` : `rgba(204, 255, 0, ${alpha * 0.3})`;
-                        ctx.beginPath(); ctx.moveTo(n1.x2d, n1.y2d); ctx.lineTo(n2.x2d, n2.y2d); ctx.stroke();
-                    }
+        // --- INPUT HANDLING ---
+        const handleStart = (x, y) => {
+            initAudio(); 
+            
+            const cx = (width / 2) + state.current.pos.x;
+            const cy = (height / 2) + state.current.pos.y;
+            const dist = Math.sqrt((x-cx)**2 + (y-cy)**2);
+            
+            if (dist < 150) {
+                state.current.isDragging = true;
+                state.current.prevMouse = { x, y };
+                state.current.vel = { x: 0, y: 0 };
+                state.current.rotVel = { x: 0, y: 0 };
+                
+                setCurrentImpacts(0);
+                setStatus("AIMING");
+            }
+        };
+
+        const handleMove = (x, y) => {
+            if (state.current.isDragging) {
+                const dx = x - state.current.prevMouse.x;
+                const dy = y - state.current.prevMouse.y;
+                
+                state.current.pos.x += dx;
+                state.current.pos.y += dy;
+                state.current.rot.y += dx * 0.005;
+                state.current.rot.x -= dy * 0.005;
+                
+                state.current.vel = { x: dx, y: dy };
+                state.current.rotVel = { x: dy * 0.002, y: -dx * 0.002 };
+
+                state.current.prevMouse = { x, y };
+            }
+        };
+
+        const handleEnd = () => {
+            if (state.current.isDragging) {
+                state.current.isDragging = false;
+                setStatus("IN FLIGHT");
+            }
+        };
+
+        window.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
+        window.addEventListener('mousemove', e => handleMove(e.clientX, e.clientY));
+        window.addEventListener('mouseup', handleEnd);
+        canvas.addEventListener('touchstart', e => handleStart(e.touches[0].clientX, e.touches[0].clientY), {passive: false});
+        canvas.addEventListener('touchmove', e => { e.preventDefault(); handleMove(e.touches[0].clientX, e.touches[0].clientY); }, {passive: false});
+        canvas.addEventListener('touchend', handleEnd);
+        window.addEventListener('resize', handleResize);
+
+        // --- RENDER & PHYSICS LOOP ---
+        const render = () => {
+            // Check flag. If unmounted, this stops immediately.
+            if (!state.current.active) return;
+
+            state.current.frame++;
+            
+            // 1. UPDATE PHYSICS
+            let hitWall = false;
+            let impactPos = { x: 0, y: 0 };
+            let currentSpeed = 0;
+
+            if (!state.current.isDragging) {
+                // Apply Velocity
+                state.current.pos.x += state.current.vel.x;
+                state.current.pos.y += state.current.vel.y;
+                
+                // Friction
+                state.current.vel.x *= 0.995; 
+                state.current.vel.y *= 0.995;
+                state.current.rotVel.x *= 0.98;
+                state.current.rotVel.y *= 0.98;
+
+                // Rotation
+                state.current.rot.x += state.current.rotVel.x;
+                state.current.rot.y += state.current.rotVel.y;
+                state.current.rot.y += 0.005;
+
+                const boundsX = width / 2 - 100;
+                const boundsY = height / 2 - 100;
+
+                // Wall Collision Logic
+                // Left & Right
+                if (state.current.pos.x > boundsX) {
+                    hitWall = true;
+                    state.current.pos.x = boundsX;
+                    state.current.vel.x *= -0.85; 
+                    impactPos = { x: width, y: height/2 + state.current.pos.y };
+                    state.current.rotVel.y += (Math.random()-0.5) * 0.2;
+                    currentSpeed = Math.abs(state.current.vel.x);
+                } else if (state.current.pos.x < -boundsX) {
+                    hitWall = true;
+                    state.current.pos.x = -boundsX;
+                    state.current.vel.x *= -0.85;
+                    impactPos = { x: 0, y: height/2 + state.current.pos.y };
+                    state.current.rotVel.y += (Math.random()-0.5) * 0.2;
+                    currentSpeed = Math.abs(state.current.vel.x);
+                }
+                
+                // Top & Bottom
+                if (state.current.pos.y > boundsY) {
+                    hitWall = true;
+                    state.current.pos.y = boundsY;
+                    state.current.vel.y *= -0.85;
+                    impactPos = { x: width/2 + state.current.pos.x, y: height };
+                    state.current.rotVel.x += (Math.random()-0.5) * 0.2;
+                    currentSpeed = Math.abs(state.current.vel.y);
+                } else if (state.current.pos.y < -boundsY) {
+                    hitWall = true;
+                    state.current.pos.y = -boundsY;
+                    state.current.vel.y *= -0.85;
+                    impactPos = { x: width/2 + state.current.pos.x, y: 0 };
+                    state.current.rotVel.x += (Math.random()-0.5) * 0.2;
+                    currentSpeed = Math.abs(state.current.vel.y);
                 }
             }
 
-            projectedNodes.forEach(node => {
-                const size = 3 * node.scale + (node.pulse * 5);
-                ctx.fillStyle = node.pulse > 0.1 ? '#fff' : '#ccff00';
-                ctx.beginPath(); ctx.arc(node.x2d, node.y2d, size, 0, Math.PI * 2); ctx.fill();
+            // 2. SCORING
+            if (hitWall && currentSpeed > 0.5) {
+                setCurrentImpacts(prev => {
+                    const next = prev + 1;
+                    setBestImpacts(currBest => Math.max(currBest, next));
+                    return next;
+                });
+                setStatus("IMPACT");
+                playBounce(currentSpeed);
+                state.current.shake = 5 + currentSpeed;
+                spawnParticles(impactPos.x, impactPos.y, '#ccff00', 15, 5 + currentSpeed);
+                spawnFloatingText(impactPos.x, impactPos.y, "+1", '#ccff00');
+            }
+
+            updateAudio(Math.abs(state.current.vel.x) + Math.abs(state.current.vel.y));
+
+            // 3. DRAWING
+            let shakeX = 0;
+            let shakeY = 0;
+            if (state.current.shake > 0) {
+                shakeX = (Math.random() - 0.5) * state.current.shake;
+                shakeY = (Math.random() - 0.5) * state.current.shake;
+                state.current.shake *= 0.9; 
+                if(state.current.shake < 0.5) state.current.shake = 0;
+            }
+
+            ctx.save();
+            ctx.translate(shakeX, shakeY);
+
+            // Clear Background
+            ctx.fillStyle = '#000';
+            ctx.fillRect(-50, -50, width+100, height+100);
+
+            // Draw Background Grid
+            ctx.strokeStyle = '#1a1a1a';
+            ctx.lineWidth = 1;
+            const paraX = -state.current.pos.x * 0.1;
+            const paraY = -state.current.pos.y * 0.1;
+            const gridSize = 50;
+            const gridOffsetX = (paraX % gridSize);
+            const gridOffsetY = (paraY % gridSize);
+
+            ctx.beginPath();
+            for (let x = gridOffsetX; x < width; x += gridSize) {
+                ctx.moveTo(x, 0); ctx.lineTo(x, height);
+            }
+            for (let y = gridOffsetY; y < height; y += gridSize) {
+                ctx.moveTo(0, y); ctx.lineTo(width, y);
+            }
+            ctx.stroke();
+
+            // Draw Particles
+            state.current.particles.forEach((p, i) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.02;
+                p.size *= 0.95;
+                if (p.life > 0) {
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.life;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                } else {
+                    state.current.particles.splice(i, 1);
+                }
             });
 
-            for (let i = state.current.pulses.length - 1; i >= 0; i--) {
-                state.current.pulses[i].r += state.current.pulses[i].speed;
-                state.current.pulses[i].life -= 0.01;
-                if (state.current.pulses[i].life <= 0 || state.current.pulses[i].r > 1000) state.current.pulses.splice(i, 1);
+            // Draw Floating Text
+            ctx.font = 'bold 20px monospace';
+            ctx.textAlign = 'center';
+            state.current.floatingTexts.forEach((t, i) => {
+                t.y += t.dy;
+                t.life -= 0.02;
+                t.dy *= 0.95;
+                if (t.life > 0) {
+                    ctx.fillStyle = t.color;
+                    ctx.globalAlpha = t.life;
+                    ctx.fillText(t.text, t.x, t.y);
+                    ctx.globalAlpha = 1.0;
+                } else {
+                    state.current.floatingTexts.splice(i, 1);
+                }
+            });
+
+            // Draw 3D Object (The W)
+            const projectedPoints = vertices.map(v => {
+                let r = rotateX(v.x, v.y, v.z, state.current.rot.x);
+                r = rotateY(r.x, r.y, r.z, state.current.rot.y);
+                return project(r.x, r.y, r.z, width, height, state.current.pos.x, state.current.pos.y);
+            });
+
+            if(state.current.frame % 2 === 0) {
+                state.current.trail.push(projectedPoints);
+                if (state.current.trail.length > 8) state.current.trail.shift();
             }
-            requestRef.current = requestAnimationFrame(loop);
+
+            state.current.trail.forEach((framePoints, index) => {
+                ctx.strokeStyle = `rgba(204, 255, 0, ${index * 0.05})`; 
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                edges.forEach(edge => {
+                    const p1 = framePoints[edge[0]];
+                    const p2 = framePoints[edge[1]];
+                    ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+                });
+                ctx.stroke();
+            });
+
+            ctx.strokeStyle = state.current.isDragging ? '#ffffff' : '#ccff00';
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = state.current.isDragging ? 30 : 10;
+            ctx.shadowColor = state.current.isDragging ? '#ffffff' : '#ccff00';
+
+            ctx.beginPath();
+            edges.forEach(edge => {
+                const p1 = projectedPoints[edge[0]];
+                const p2 = projectedPoints[edge[1]];
+                ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+            });
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#000';
+            projectedPoints.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
+                ctx.fill();
+                ctx.stroke();
+            });
+
+            ctx.restore();
+            requestRef.current = requestAnimationFrame(render);
         };
 
-        requestRef.current = requestAnimationFrame(loop);
+        handleResize();
+        requestRef.current = requestAnimationFrame(render);
 
         return () => {
-            window.removeEventListener('resize', handleResize);
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('click', handleClick);
+            state.current.active = false; // STOP LOOP
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
-            if (state.current.audio) {
+            window.removeEventListener('resize', handleResize);
+            if (audioRef.current && audioRef.current.ctx) {
                 try {
-                    state.current.audio.osc.stop();
-                    state.current.audio.ctx.close();
+                    audioRef.current.osc.stop();
+                    audioRef.current.ctx.close();
                 } catch(e) {}
             }
         };
     }, []);
 
+    // --- UI RENDER (MATCHING MASTER CODE LAYOUT) ---
     return (
-        <div className="fixed inset-0 z-[10000] bg-black cursor-crosshair overflow-hidden">
+        <div className="fixed inset-0 z-[10000] bg-black cursor-crosshair overflow-hidden w-full h-full">
             <canvas ref={canvasRef} className="block w-full h-full" />
+            
             <div className="absolute top-0 left-0 w-full h-full pointer-events-none p-8 flex flex-col justify-between">
+                
+                {/* TOP BAR */}
                 <div className="flex justify-between items-start">
-                    <div><div className="text-[var(--accent)] font-black font-anton text-2xl tracking-widest animate-pulse">THE HIVEMIND</div><div className="text-white font-mono text-xs opacity-70">GLOBAL CONSENSUS: 100%</div></div>
-                    <div className="text-right font-mono text-xs text-[var(--accent)]"><div>ACTIVE NODES: {nodeCount}</div><div>LATENCY: 0ms</div></div>
+                    <div>
+                        <div className="text-[#ccff00] font-black font-anton text-2xl tracking-widest animate-pulse">HYPER-OBJECT</div>
+                        <div className="text-white font-mono text-xs opacity-70">PHYSICS ENGINE: ACTIVE</div>
+                    </div>
+                    <div className="text-right font-mono text-xs text-[#ccff00]">
+                        <div>IMPACTS: {currentImpacts}</div>
+                        <div>BEST: {bestImpacts}</div>
+                    </div>
                 </div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center mix-blend-difference">
-                    <div className="text-white font-mono text-xs tracking-[0.5em] mb-4 opacity-50">CLICK TO BROADCAST SIGNAL</div>
-                </div>
+
+                {/* CENTER PROMPT */}
+                {!state.current?.isDragging && currentImpacts === 0 && (
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center mix-blend-difference">
+                        <div className="text-white font-mono text-xs tracking-[0.5em] mb-4 opacity-50">DRAG TO THROW</div>
+                    </div>
+                )}
+
+                {/* BOTTOM BAR */}
                 <div className="flex justify-between items-end">
-                    <div className="font-mono text-xs text-neutral-500 max-w-xs">Connected to mainnet. You are Node #001. Do not break the chain.</div>
-                    <button onClick={onExit} className="pointer-events-auto border border-white text-white hover:bg-white hover:text-black px-8 py-3 font-mono font-bold tracking-widest uppercase transition-all flex items-center gap-2 backdrop-blur-md"><Power size={18} /> DISCONNECT</button>
+                    <div className="font-mono text-xs text-neutral-500 max-w-xs">
+                        STATUS: {status}. Ready for launch.
+                    </div>
+                    <button 
+                        onClick={onExit} 
+                        className="pointer-events-auto border border-white text-white hover:bg-white hover:text-black px-8 py-3 font-mono font-bold tracking-widest uppercase transition-all flex items-center gap-2 backdrop-blur-md"
+                    >
+                        <Power size={18} /> DISCONNECT
+                    </button>
                 </div>
             </div>
         </div>
