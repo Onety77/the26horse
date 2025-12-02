@@ -585,7 +585,7 @@ const VelocityMarquee = () => {
 // --- UPDATED TACTICAL CHART WITH LIVE EMBED ---
 const TacticalChart = () => {
     // DexScreener embed URL for Solana
-    const chartUrl = `https://dexscreener.com/solana/${TOKEN_CA}?embed=1&theme=dark&trades=0&info=0`;
+    const chartUrl = `https://dexscreener.com/solana/6f5HZ57NRHkc9rQEAXXKFvPaTDKAFGyyqUvZCWwZpump?embed=1&theme=dark&trades=0&info=0`;
 
     return (
         <div className="break-inside-avoid w-full bg-[#080808] border border-neutral-800 relative overflow-hidden group mb-8 h-[450px] flex flex-col">
