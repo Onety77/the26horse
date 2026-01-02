@@ -301,6 +301,8 @@ export default function App() {
     }
   };
 
+
+  
   return (
     <div className="bg-black text-white font-sans selection:bg-white selection:text-black min-h-screen">
       <audio ref={audioRef} loop preload="auto" src="bgmusic.mp3" />
