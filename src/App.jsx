@@ -120,8 +120,8 @@ const KineticCycle = () => {
   const xTranslate = useTransform(scrollYProgress, [0, 1], ["0%", "-75%"]);
 
   const cycles = [
-    { year: "1906", title: "THE SPARK", desc: "A world in transition. The first gallop of the modern age.", img: "1906.jpg" },
-    { year: "1966", title: "THE REVOLUTION", desc: "The old guard falls. Tradition shatters. Momentum becomes absolute.", img: "1966.jpg" },
+    { year: "1906", title: "THE SPARK", desc: "A world in transition. The first gallop of the modern age.", img: "1966.jpg" },
+    { year: "1966", title: "THE REVOLUTION", desc: "The old guard falls. Tradition shatters. Momentum becomes absolute.", img: "1906.jpg" },
     { year: "2026", title: "THE SOVEREIGN", desc: "The individual takes the reign. The sixty-year silence is over.", img: "2026.jpg" },
   ];
 
