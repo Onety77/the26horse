@@ -29,7 +29,7 @@ const SovereignHero = ({ isReady }) => {
 
   const handleMouseMove = (e) => updatePosition(e.clientX, e.clientY);
   const handleTouchMove = (e) => {
-    if (e.touches[0]) {
+    if (e.touches && e.touches[0]) {
       updatePosition(e.touches[0].clientX, e.touches[0].clientY);
     }
   };
@@ -46,8 +46,9 @@ const SovereignHero = ({ isReady }) => {
     <section 
       ref={containerRef}
       onMouseMove={handleMouseMove}
+      onTouchStart={handleTouchMove}
       onTouchMove={handleTouchMove}
-      className="relative h-screen w-full overflow-hidden bg-black flex items-center justify-center cursor-none touch-none"
+      className="relative h-screen w-full overflow-hidden bg-black flex items-center justify-center cursor-none touch-pan-y"
     >
       <motion.div style={{ y: yTranslate }} className="absolute inset-0 z-0">
         {/* Softened Gradient Overlay */}
@@ -220,7 +221,7 @@ const SovereignTriptych = () => {
 
 const ContractCTA = () => {
   const [copied, setCopied] = useState(false);
-  const ca = "0x000000000000000000000000000000000000dead";
+  const ca = "Coming Soon...";
 
   const handleCopy = () => {
     copyToClipboard(ca);
@@ -231,7 +232,7 @@ const ContractCTA = () => {
   return (
     <section id="ca" className="py-32 bg-black border-y border-white/5 flex flex-col items-center">
       <motion.div whileInView={{ opacity: [0, 1], y: [20, 0] }} className="text-center px-4">
-        <span className="text-white/20 text-[10px] uppercase tracking-[1em] block mb-10 font-mono">Verification</span>
+        <span className="text-white/20 text-[10px] uppercase tracking-[1em] block mb-10 font-mono">CONTRACT ADDRESS</span>
         <div 
           onClick={handleCopy}
           className="relative group cursor-pointer border border-white/10 hover:border-white/40 px-6 md:px-12 py-6 rounded-sm bg-zinc-950/50 transition-all active:scale-95"
@@ -264,7 +265,7 @@ const Manifesto = () => (
     <div className="max-w-6xl w-full relative z-10">
       <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-start">
         <div className="w-full lg:w-1/2 lg:sticky lg:top-40 h-auto">
-          <h2 className="text-white text-6xl md:text-9xl font-serif font-black uppercase leading-[0.85] tracking-tighter">
+          <h2 className="text-white text-6xl md:text-8xl font-serif font-black uppercase leading-[0.85] tracking-tighter">
             The<br/>Manifesto
           </h2>
         </div>
@@ -323,7 +324,7 @@ export default function App() {
               <img 
                 src="bg2.jpg" 
                 alt="" 
-                className="w-full h-full object-cover grayscale brightness-[0.6]"
+                className="w-full h-full object-cover grayscale brightness-[0.8]"
                 onError={(e) => { e.target.style.display = 'none'; }}
               />
             </div>
@@ -393,8 +394,8 @@ export default function App() {
 
               <div className="flex gap-16 md:justify-end items-center py-4">
                 {[
-                  { label: 'Buy', url: '#' },
-                  { label: 'X', url: 'https://x.com' }
+                  { label: 'Buy', url: 'https://pump.fun/' },
+                  { label: 'X', url: 'https://x.com/TheHORSE2026' }
                 ].map((link) => (
                   <a key={link.label} href={link.url} target="_blank" rel="noreferrer" className="group relative inline-block text-[11px] font-black uppercase tracking-[0.8em] transition-all">
                     <span className="relative z-10 group-hover:text-white text-white/40 transition-colors">{link.label}</span>
